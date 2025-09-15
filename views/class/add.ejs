@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수강반 추가 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .form-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .time-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .time-group select {
+            width: auto;
+        }
+        
+        .btn-group-custom {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5567d8 0%, #68428e 100%);
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <h2 class="page-title">수강반 추가</h2>
+        
+        <div class="form-section">
+            <form id="classAddForm">
+                <div class="form-group">
+                    <label class="form-label">수강반명</label>
+                    <input type="text" class="form-control" id="className" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학교</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="elem" name="school" value="초등" required>
+                            <label for="elem">초등</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="middle" name="school" value="중등" required>
+                            <label for="middle">중등</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="high" name="school" value="고등" required>
+                            <label for="high">고등</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학년</label>
+                    <div class="radio-group" id="gradeGroup">
+                        <% for(let i = 1; i <= 6; i++) { %>
+                        <div class="radio-item">
+                            <input type="radio" id="grade<%= i %>" name="grade" value="<%= i %>" required>
+                            <label for="grade<%= i %>"><%= i %>학년</label>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">요일</label>
+                    <div class="radio-group">
+                        <% const days = ['월', '화', '수', '목', '금', '토', '일']; %>
+                        <% days.forEach(function(day) { %>
+                        <div class="radio-item">
+                            <input type="radio" id="day<%= day %>" name="day" value="<%= day %>" required>
+                            <label for="day<%= day %>"><%= day %>요일</label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">수업시간</label>
+                    <div class="time-group">
+                        <select class="form-select" id="hour" name="hour" required>
+                            <option value="">시</option>
+                            <% for(let h = 0; h < 24; h++) { %>
+                            <option value="<%= h %>"><%= h %>시</option>
+                            <% } %>
+                        </select>
+                        <span>:</span>
+                        <select class="form-select" id="minute" name="minute" required>
+                            <option value="">분</option>
+                            <option value="0">00분</option>
+                            <option value="15">15분</option>
+                            <option value="30">30분</option>
+                            <option value="45">45분</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">1교시 선생님</label>
+                    <select class="form-select" id="teacherOne" name="teacherOne" required>
+                        <option value="">선택하세요</option>
+                        <% if (teachers) { %>
+                            <% teachers.forEach(function(teacher) { %>
+                            <option value="<%= teacher.name %>"><%= teacher.name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">2교시 선생님</label>
+                    <select class="form-select" id="teacherTwo" name="teacherTwo">
+                        <option value="">선택하세요</option>
+                        <% if (teachers) { %>
+                            <% teachers.forEach(function(teacher) { %>
+                            <option value="<%= teacher.name %>"><%= teacher.name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="btn-group-custom">
+                    <button type="submit" class="btn btn-primary">추가</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='/admin/dashboard'">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        // 학교 선택에 따른 학년 옵션 변경
+        document.querySelectorAll('input[name="school"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const gradeGroup = document.getElementById('gradeGroup');
+                gradeGroup.innerHTML = '';
+                
+                let maxGrade = this.value === '초등' ? 6 : 3;
+                
+                for(let i = 1; i <= maxGrade; i++) {
+                    const radioItem = document.createElement('div');
+                    radioItem.className = 'radio-item';
+                    radioItem.innerHTML = `
+                        <input type="radio" id="grade${i}" name="grade" value="${i}" required>
+                        <label for="grade${i}">${i}학년</label>
+                    `;
+                    gradeGroup.appendChild(radioItem);
+                }
+                
+                // 첫 번째 학년 선택
+                gradeGroup.querySelector('input[type="radio"]').checked = true;
+            });
+        });
+        
+        // 폼 제출 처리
+        document.getElementById('classAddForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/class/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.href = '/class/edit';
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

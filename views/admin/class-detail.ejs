@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= classInfo.name %> - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .content-container {
+            padding: 30px;
+        }
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .page-title {
+            color: #333;
+            font-weight: bold;
+            margin: 0;
+        }
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+            color: white;
+        }
+        .student-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .student-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .student-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .student-name {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .student-name:hover {
+            text-decoration: underline;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .empty-state i {
+            font-size: 48px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="content-container">
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title"><%= classInfo.name %></h2>
+                <a href="/admin/dashboard" class="btn-back">
+                    <i class="bi bi-arrow-left"></i> 수강반 목록으로
+                </a>
+            </div>
+        </div>
+
+        <% if (students && students.length > 0) { %>
+            <div class="student-table">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>학생이름</th>
+                            <th>학생번호</th>
+                            <th>학부모번호</th>
+                            <th>등록일</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% students.forEach(function(student) { %>
+                        <tr>
+                            <td>
+                                <a href="/admin/student/<%= student.id %>" class="student-name">
+                                    <%= student.name %>
+                                </a>
+                            </td>
+                            <td><%= student.sphone %></td>
+                            <td><%= student.pphone %></td>
+                            <td><%= student.insert_date %></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <h4>등록된 학생이 없습니다</h4>
+                <p class="text-muted">이 수강반에는 아직 등록된 학생이 없습니다.</p>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('../partials/scripts') %>
+</body>
+</html>

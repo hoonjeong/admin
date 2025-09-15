@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>블로그 컨텐츠 생성기 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .generator-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .input-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: block;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .generate-btn {
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .generate-btn:hover {
+            background: #0056b3;
+        }
+        .generate-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .modal-backdrop-custom {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+        .loading-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            z-index: 1050;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .result-content {
+            min-height: 400px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background: #f8f9fa;
+            white-space: pre-wrap;
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.8;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+        }
+        .copy-btn:hover {
+            background: #218838;
+        }
+        .download-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        .download-btn:hover {
+            background: #138496;
+        }
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+        .example-section {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .example-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .example-text {
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container mt-4">
+        <h2 class="mb-4">블로그 컨텐츠 생성기</h2>
+        
+        <div class="generator-container">
+            <!-- 입력 섹션 -->
+            <div class="input-section">
+                <h4 class="mb-4">블로그 정보 입력</h4>
+                
+                <div class="form-group">
+                    <label class="form-label" for="blogTopic">블로그 주제 *</label>
+                    <input type="text" id="blogTopic" class="form-control" placeholder="예: 중학생을 위한 효과적인 국어 공부법">
+                    <div class="help-text">블로그 글의 핵심 주제를 입력하세요</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="blogTitle">블로그 제목 *</label>
+                    <input type="text" id="blogTitle" class="form-control" placeholder="예: 성적 향상을 위한 중학생 국어 공부법 완벽 가이드">
+                    <div class="help-text">검색 최적화를 고려한 매력적인 제목을 입력하세요</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="keywords">핵심 키워드</label>
+                    <input type="text" id="keywords" class="form-control" placeholder="예: 중학생 국어, 국어 공부법, 내신 대비, 독해력 향상">
+                    <div class="help-text">콤마(,)로 구분하여 여러 키워드를 입력하세요</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="reference">참고 내용</label>
+                    <textarea id="reference" class="form-control" placeholder="예: 전문적이면서도 학부모가 이해하기 쉽게 작성, 실제 사례와 구체적인 방법 포함, 학원의 교육 철학 반영"></textarea>
+                    <div class="help-text">글의 톤, 스타일, 포함되어야 할 내용 등을 자유롭게 작성하세요</div>
+                </div>
+                
+                <div class="example-section">
+                    <div class="example-title">💡 작성 팁</div>
+                    <div class="example-text">
+                        • 주제와 제목은 구체적이고 명확하게 작성하세요<br>
+                        • 핵심 키워드는 실제 검색에 사용될 단어를 선택하세요<br>
+                        • 참고 내용에는 원하는 글의 방향성을 상세히 설명하세요<br>
+                        • SEO 최적화를 위해 제목에 핵심 키워드를 포함시키세요
+                    </div>
+                </div>
+                
+                <button class="generate-btn mt-4" onclick="generateBlog()">
+                    <i class="bi bi-magic"></i> 블로그 컨텐츠 생성하기
+                </button>
+            </div>
+            
+            <!-- 로딩 모달 -->
+            <div class="modal-backdrop-custom" id="modalBackdrop"></div>
+            <div class="loading-modal" id="loadingModal">
+                <div class="spinner"></div>
+                <h4>AI의 답변을 기다리고 있습니다...</h4>
+                <p class="text-muted">블로그 컨텐츠를 생성하고 있습니다. 잠시만 기다려주세요.</p>
+            </div>
+            
+            <!-- 결과 섹션 -->
+            <div class="result-section" id="resultSection">
+                <h4>생성된 블로그 컨텐츠</h4>
+                <div class="result-content" id="resultContent" contenteditable="true"></div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn copy-btn" onclick="copyToClipboard()">
+                        <i class="bi bi-clipboard"></i> 클립보드에 복사하기
+                    </button>
+                    <button class="action-btn download-btn" onclick="downloadAsText()">
+                        <i class="bi bi-download"></i> 텍스트 파일로 다운로드
+                    </button>
+                    <button class="action-btn reset-btn" onclick="resetGenerator()">
+                        <i class="bi bi-arrow-clockwise"></i> 새로 작성하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 블로그 생성
+        async function generateBlog() {
+            const topic = document.getElementById('blogTopic').value.trim();
+            const title = document.getElementById('blogTitle').value.trim();
+            const keywords = document.getElementById('keywords').value.trim();
+            const reference = document.getElementById('reference').value.trim();
+            
+            // 유효성 검사
+            if (!topic || !title) {
+                alert('블로그 주제와 제목은 필수 입력 항목입니다.');
+                return;
+            }
+            
+            // UI 상태 변경 - 모달 표시
+            document.querySelector('.generate-btn').disabled = true;
+            document.getElementById('modalBackdrop').style.display = 'block';
+            document.getElementById('loadingModal').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            try {
+                const response = await fetch('/ai/api/generate-blog', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        topic: topic,
+                        title: title,
+                        keywords: keywords,
+                        reference: reference
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 결과 표시
+                    document.getElementById('resultContent').textContent = result.content;
+                    document.getElementById('modalBackdrop').style.display = 'none';
+                    document.getElementById('loadingModal').style.display = 'none';
+                    document.getElementById('resultSection').style.display = 'block';
+                    // 결과 영역으로 스크롤 및 포커스
+                    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    document.getElementById('resultContent').focus();
+                } else {
+                    alert('생성에 실패했습니다: ' + result.error);
+                    document.getElementById('modalBackdrop').style.display = 'none';
+                    document.getElementById('loadingModal').style.display = 'none';
+                    document.querySelector('.generate-btn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+                document.getElementById('modalBackdrop').style.display = 'none';
+                document.getElementById('loadingModal').style.display = 'none';
+                document.querySelector('.generate-btn').disabled = false;
+            }
+        }
+        
+        // 클립보드에 복사
+        function copyToClipboard() {
+            const content = document.getElementById('resultContent').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                alert('복사에 실패했습니다.');
+            });
+        }
+        
+        // 텍스트 파일로 다운로드
+        function downloadAsText() {
+            const content = document.getElementById('resultContent').innerText;
+            const title = document.getElementById('blogTitle').value || '블로그_컨텐츠';
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // 초기화
+        function resetGenerator() {
+            document.getElementById('blogTopic').value = '';
+            document.getElementById('blogTitle').value = '';
+            document.getElementById('keywords').value = '';
+            document.getElementById('reference').value = '';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('resultContent').textContent = '';
+            document.querySelector('.generate-btn').disabled = false;
+        }
+        
+        // 엔터 키 처리
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !document.querySelector('.generate-btn').disabled) {
+                    generateBlog();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

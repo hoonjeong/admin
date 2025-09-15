@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글관리 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .main-container {
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+            margin: 0;
+        }
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            width: 250px;
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .category-filter {
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 120px;
+        }
+        .btn-search {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-search:hover {
+            background: #5a67d8;
+        }
+        .btn-write {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-write:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+            color: white;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .post-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .post-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .post-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .post-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .post-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .post-title {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .post-title:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+        .comment-count {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .category-N {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        .category-S {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+        .category-C {
+            background: #a29bfe;
+            color: #6c5ce7;
+        }
+        .category-D {
+            background: #81ecec;
+            color: #00b894;
+        }
+        .category-R {
+            background: #fab1a0;
+            color: #e17055;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-edit, .btn-delete {
+            padding: 5px 12px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-edit {
+            background: #28a745;
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #218838;
+        }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .empty-state-text {
+            font-size: 18px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 5px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .pagination a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .pagination .current {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .search-input {
+                width: 100%;
+            }
+            .post-table {
+                font-size: 12px;
+            }
+            .post-table th, .post-table td {
+                padding: 10px 8px;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="main-container">
+        <div class="header-section">
+            <h2 class="page-title">글관리</h2>
+            <div class="header-controls">
+                <div class="search-box">
+                    <select class="category-filter" id="categoryFilter">
+                        <option value="">전체 카테고리</option>
+                        <% Object.entries(categories).forEach(([key, value]) => { %>
+                            <option value="<%= key %>" <%= selectedCategory === key ? 'selected' : '' %>><%= value %></option>
+                        <% }); %>
+                    </select>
+                    <input type="text" class="search-input" id="searchInput" placeholder="제목 또는 내용 검색" value="<%= search %>">
+                    <button class="btn-search" onclick="searchPosts()">
+                        <i class="bi bi-search"></i> 검색
+                    </button>
+                </div>
+                <a href="/post/write" class="btn-write">
+                    <i class="bi bi-pencil-square"></i> 글쓰기
+                </a>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <% if (posts && posts.length > 0) { %>
+                <table class="post-table">
+                    <thead>
+                        <tr>
+                            <th width="8%">번호</th>
+                            <th width="12%">카테고리</th>
+                            <th width="35%">제목</th>
+                            <th width="10%">작성자</th>
+                            <th width="10%">조회수</th>
+                            <th width="10%">날짜</th>
+                            <th width="15%">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% posts.forEach(function(post) { %>
+                            <tr>
+                                <td><%= post.id %></td>
+                                <td>
+                                    <span class="category-badge category-<%= post.category %>">
+                                        <%= post.categoryName %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/post/view/<%= post.id %>" class="post-title">
+                                        <%= post.subject %>
+                                        <span class="comment-count">(<%= post.commentCount || 0 %>)</span>
+                                    </a>
+                                </td>
+                                <td><%= post.writer %></td>
+                                <td><%= post.read_count %></td>
+                                <td><%= post.date %></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-edit" onclick="editPost(<%= post.id %>)">
+                                            <i class="bi bi-pencil"></i> 수정
+                                        </button>
+                                        <button class="btn-delete" onclick="deletePost(<%= post.id %>)">
+                                            <i class="bi bi-trash"></i> 삭제
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+                
+                <% if (totalPages > 1) { %>
+                    <div class="pagination">
+                        <% if (currentPage > 1) { %>
+                            <a href="?page=<%= currentPage - 1 %>&category=<%= selectedCategory %>&search=<%= search %>">이전</a>
+                        <% } %>
+                        
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <% if (i === currentPage) { %>
+                                <span class="current"><%= i %></span>
+                            <% } else { %>
+                                <a href="?page=<%= i %>&category=<%= selectedCategory %>&search=<%= search %>"><%= i %></a>
+                            <% } %>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <a href="?page=<%= currentPage + 1 %>&category=<%= selectedCategory %>&search=<%= search %>">다음</a>
+                        <% } %>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <p class="empty-state-text">등록된 게시글이 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function searchPosts() {
+            const category = $('#categoryFilter').val();
+            const search = $('#searchInput').val();
+            let url = '/post/list?';
+            
+            if (category) url += 'category=' + category + '&';
+            if (search) url += 'search=' + encodeURIComponent(search) + '&';
+            
+            window.location.href = url;
+        }
+        
+        // 엔터키로 검색
+        $('#searchInput').keypress(function(e) {
+            if (e.which === 13) {
+                searchPosts();
+            }
+        });
+        
+        function editPost(id) {
+            window.location.href = '/post/edit/' + id;
+        }
+        
+        function deletePost(id) {
+            if (!confirm('정말 이 게시글을 삭제하시겠습니까?')) {
+                return;
+            }
+            
+            $.ajax({
+                url: '/post/delete/' + id,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        alert('게시글이 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert(response.message || '삭제 실패');
+                    }
+                },
+                error: function() {
+                    alert('서버 오류가 발생했습니다.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

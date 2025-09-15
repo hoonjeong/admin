@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= lecture.subject %> - 이든배움국어학원 관리자</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: rgba(255,255,255,0.8) !important;
+        }
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.5);
+        }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        .dropdown-toggle::after {
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 20px;
+        }
+        
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb span {
+            color: #999;
+            margin: 0 8px;
+        }
+        
+        .lecture-header {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .lecture-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .lecture-meta {
+            display: flex;
+            gap: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .lecture-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .lecture-description {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #444;
+            line-height: 1.6;
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            margin-bottom: 20px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .files-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+        
+        .file-item:hover {
+            background-color: #e9ecef;
+        }
+        
+        .file-icon {
+            font-size: 20px;
+        }
+        
+        .file-name {
+            flex: 1;
+            color: #333;
+        }
+        
+        .file-download {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .file-download:hover {
+            text-decoration: underline;
+        }
+        
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .question-item {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .question-writer {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .question-text {
+            color: #444;
+            line-height: 1.5;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .lecture-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/lecture/list">강의 목록</a>
+            <span>›</span>
+            <span><%= lecture.subject %></span>
+        </div>
+        
+        <div class="lecture-header">
+            <h1 class="lecture-title"><%= lecture.subject %></h1>
+            <div class="lecture-meta">
+                <div class="lecture-meta-item">
+                    <span>📅</span>
+                    <span>강의일: <%= lecture.lecture_date %></span>
+                </div>
+                <div class="lecture-meta-item">
+                    <span>👤</span>
+                    <span>강사: <%= lecture.teacher %></span>
+                </div>
+            </div>
+            <% if (lecture.description) { %>
+                <div class="lecture-description">
+                    <%= lecture.description %>
+                </div>
+            <% } %>
+        </div>
+        
+        <% if (lecture.url) { %>
+            <div class="section">
+                <h3 class="section-title">
+                    <span>🎥</span>
+                    <span>강의 영상</span>
+                </h3>
+                <div class="video-container">
+                    <% 
+                    // YouTube URL을 임베드 URL로 변환
+                    let embedUrl = lecture.url;
+                    if (lecture.url.includes('youtube.com/watch?v=')) {
+                        const videoId = lecture.url.split('v=')[1]?.split('&')[0];
+                        if (videoId) {
+                            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                        }
+                    } else if (lecture.url.includes('youtu.be/')) {
+                        const videoId = lecture.url.split('youtu.be/')[1]?.split('?')[0];
+                        if (videoId) {
+                            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                        }
+                    } else if (lecture.url.includes('youtube.com/embed/')) {
+                        embedUrl = lecture.url;
+                    }
+                    %>
+                    <iframe src="<%= embedUrl %>" allowfullscreen></iframe>
+                </div>
+            </div>
+        <% } %>
+        
+        <% if (files && files.length > 0) { %>
+            <div class="section">
+                <h3 class="section-title">
+                    <span>📎</span>
+                    <span>첨부파일</span>
+                </h3>
+                <div class="files-list">
+                    <% files.forEach(function(file) { %>
+                        <div class="file-item">
+                            <span class="file-icon">📄</span>
+                            <span class="file-name"><%= file.filename %></span>
+                            <a href="/lecture/download/<%= file.id %>" class="file-download">다운로드</a>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+        
+        <div class="section">
+            <h3 class="section-title">
+                <span>💬</span>
+                <span>학생 질문 (<%= questions ? questions.length : 0 %>)</span>
+            </h3>
+            <% if (questions && questions.length > 0) { %>
+                <div class="questions-list">
+                    <% questions.forEach(function(question) { %>
+                        <div class="question-item">
+                            <div class="question-header">
+                                <span class="question-writer"><%= question.writer %></span>
+                                <span class="question-date"><%= question.date %></span>
+                            </div>
+                            <div class="question-text">
+                                <%= question.text %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">💭</div>
+                    <p>아직 등록된 질문이 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/lecture/edit/<%= lecture.id %>" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 수정
+            </a>
+            <a href="/lecture/list" class="btn btn-secondary">
+                <i class="bi bi-list"></i> 목록으로
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

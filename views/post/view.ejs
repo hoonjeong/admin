@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= post.subject %> - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .breadcrumb {
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb span {
+            color: #999;
+            margin: 0 8px;
+        }
+        .post-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .post-header {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .post-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .post-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        .post-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .category-N {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        .category-S {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+        .category-C {
+            background: #a29bfe;
+            color: #6c5ce7;
+        }
+        .category-D {
+            background: #81ecec;
+            color: #00b894;
+        }
+        .category-R {
+            background: #fab1a0;
+            color: #e17055;
+        }
+        .post-content {
+            line-height: 1.8;
+            color: #444;
+            font-size: 16px;
+            min-height: 300px;
+        }
+        .post-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+        }
+        .post-content h1, .post-content h2, .post-content h3 {
+            margin: 30px 0 15px;
+            color: #333;
+        }
+        .post-content p {
+            margin: 15px 0;
+        }
+        .post-content ul, .post-content ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        .post-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #666;
+            font-style: italic;
+        }
+        .files-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .files-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+        }
+        .file-download {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .file-download:hover {
+            text-decoration: underline;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px 0;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 10px 25px;
+            border-radius: 5px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-edit {
+            background: #28a745;
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #218838;
+        }
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #c82333;
+        }
+        .btn-list {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-list:hover {
+            background: #5a6268;
+        }
+        .comments-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .comments-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comment-count {
+            color: #667eea;
+        }
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .comment-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .comment-writer {
+            font-weight: 600;
+            color: #333;
+        }
+        .comment-date {
+            color: #999;
+        }
+        .comment-text {
+            color: #444;
+            line-height: 1.6;
+        }
+        .empty-comments {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="main-container">
+        <div class="breadcrumb">
+            <a href="/post/list">글관리</a>
+            <span>›</span>
+            <%= post.subject %>
+        </div>
+        
+        <div class="post-container">
+            <div class="post-header">
+                <h1 class="post-title">
+                    <%= post.subject %>
+                    <% if (comments && comments.length > 0) { %>
+                        <span style="color: #dc3545; font-size: 20px; font-weight: normal;">(<%= comments.length %>)</span>
+                    <% } %>
+                </h1>
+                <div class="post-meta">
+                    <div class="post-meta-item">
+                        <span class="category-badge category-<%= post.category %>">
+                            <%= post.categoryName %>
+                        </span>
+                    </div>
+                    <div class="post-meta-item">
+                        <i class="bi bi-person"></i>
+                        <span><%= post.writer %></span>
+                    </div>
+                    <div class="post-meta-item">
+                        <i class="bi bi-calendar"></i>
+                        <span><%= post.formatted_date %></span>
+                    </div>
+                    <div class="post-meta-item">
+                        <i class="bi bi-eye"></i>
+                        <span>조회 <%= post.read_count %></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="post-content">
+                <%- post.contents %>
+            </div>
+            
+            <% if (files && files.length > 0) { %>
+                <div class="files-section">
+                    <div class="files-title">
+                        <i class="bi bi-paperclip"></i>
+                        첨부파일 (<%= files.length %>)
+                    </div>
+                    <div class="file-list">
+                        <% files.forEach(function(file) { %>
+                            <div class="file-item">
+                                <div class="file-name">
+                                    <i class="bi bi-file-earmark"></i>
+                                    <span><%= file.filename %></span>
+                                </div>
+                                <a href="/post/download/<%= file.id %>" class="file-download">
+                                    <i class="bi bi-download"></i> 다운로드
+                                </a>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+            <% } %>
+            
+            <% if (user.code === 'O') { %>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" onclick="editPost(<%= post.id %>)">
+                        <i class="bi bi-pencil"></i> 수정
+                    </button>
+                    <button class="btn btn-delete" onclick="deletePost(<%= post.id %>)">
+                        <i class="bi bi-trash"></i> 삭제
+                    </button>
+                    <a href="/post/list" class="btn btn-list">
+                        <i class="bi bi-list"></i> 목록
+                    </a>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="comments-section">
+            <div class="comments-title">
+                <i class="bi bi-chat-dots"></i>
+                댓글
+                <span class="comment-count">(<%= comments ? comments.length : 0 %>)</span>
+            </div>
+            
+            <% if (comments && comments.length > 0) { %>
+                <div class="comment-list">
+                    <% comments.forEach(function(comment) { %>
+                        <div class="comment-item">
+                            <div class="comment-header">
+                                <span class="comment-writer"><%= comment.writer || '익명' %></span>
+                                <span class="comment-date"><%= comment.formatted_date || '' %></span>
+                            </div>
+                            <div class="comment-text">
+                                <%= comment.text || comment.contents || '' %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="empty-comments">
+                    <i class="bi bi-chat" style="font-size: 48px; color: #ddd;"></i>
+                    <p>아직 댓글이 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function editPost(id) {
+            window.location.href = '/post/edit/' + id;
+        }
+        
+        function deletePost(id) {
+            if (!confirm('정말 이 게시글을 삭제하시겠습니까?\n삭제된 게시글은 복구할 수 없습니다.')) {
+                return;
+            }
+            
+            $.ajax({
+                url: '/post/delete/' + id,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        alert('게시글이 삭제되었습니다.');
+                        window.location.href = '/post/list';
+                    } else {
+                        alert(response.message || '삭제 실패');
+                    }
+                },
+                error: function() {
+                    alert('서버 오류가 발생했습니다.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

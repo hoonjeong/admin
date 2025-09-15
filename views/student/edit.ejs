@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수강생 정보 수정 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .form-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn-group-custom {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5567d8 0%, #68428e 100%);
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <h2 class="page-title">수강생 정보 수정</h2>
+        
+        <div class="form-section">
+            <form id="studentEditForm">
+                <div class="form-group">
+                    <label class="form-label">이름 *</label>
+                    <input type="text" class="form-control" id="name" name="name" value="<%= student.name %>" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학교</label>
+                    <input type="text" class="form-control" id="school" name="school" value="<%= student.school %>" placeholder="예: 이든초등학교">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학교급</label>
+                    <div class="radio-group">
+                        <% 
+                        let schoolLevel = '';
+                        if (student.grade <= 6) {
+                            schoolLevel = '초등';
+                        } else if (student.grade <= 9) {
+                            schoolLevel = '중등';
+                        } else {
+                            schoolLevel = '고등';
+                        }
+                        %>
+                        <div class="radio-item">
+                            <input type="radio" id="elem" name="schoolLevel" value="초등" <%= schoolLevel === '초등' ? 'checked' : '' %> required>
+                            <label for="elem">초등</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="middle" name="schoolLevel" value="중등" <%= schoolLevel === '중등' ? 'checked' : '' %> required>
+                            <label for="middle">중등</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="high" name="schoolLevel" value="고등" <%= schoolLevel === '고등' ? 'checked' : '' %> required>
+                            <label for="high">고등</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학년</label>
+                    <div class="radio-group" id="gradeGroup">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학생 핸드폰 번호</label>
+                    <input type="tel" class="form-control" id="sphone" name="sphone" value="<%= student.sphone || '' %>" placeholder="010-0000-0000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">학부모 핸드폰 번호</label>
+                    <input type="tel" class="form-control" id="pphone" name="pphone" value="<%= student.pphone || '' %>" placeholder="010-0000-0000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">주소</label>
+                    <input type="text" class="form-control" id="address" name="address" value="<%= student.address || '' %>">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">계열</label>
+                    <select class="form-select" id="specialty" name="specialty">
+                        <option value="">선택하세요</option>
+                        <option value="문과" <%= student.specialty === '문과' ? 'selected' : '' %>>문과</option>
+                        <option value="이과" <%= student.specialty === '이과' ? 'selected' : '' %>>이과</option>
+                        <option value="예체능" <%= student.specialty === '예체능' ? 'selected' : '' %>>예체능</option>
+                        <option value="기타" <%= student.specialty === '기타' ? 'selected' : '' %>>기타</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">메모</label>
+                    <textarea class="form-control" id="memo" name="memo" rows="3"><%= student.memo || '' %></textarea>
+                </div>
+                
+                <div class="btn-group-custom">
+                    <button type="submit" class="btn btn-primary">수정</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='/student/manage'">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        const studentId = <%= student.id %>;
+        const currentGrade = <%= student.grade %>;
+        const currentYear = <%= student.year %>;
+        
+        // 학년 옵션 생성 함수
+        function updateGradeOptions() {
+            const schoolLevel = document.querySelector('input[name="schoolLevel"]:checked').value;
+            const gradeGroup = document.getElementById('gradeGroup');
+            gradeGroup.innerHTML = '';
+            
+            let maxGrade = schoolLevel === '초등' ? 6 : 3;
+            
+            for(let i = 1; i <= maxGrade; i++) {
+                const radioItem = document.createElement('div');
+                radioItem.className = 'radio-item';
+                radioItem.innerHTML = `
+                    <input type="radio" id="grade${i}" name="gradeYear" value="${i}" required>
+                    <label for="grade${i}">${i}학년</label>
+                `;
+                gradeGroup.appendChild(radioItem);
+            }
+            
+            // 현재 학년 선택
+            if (schoolLevel === '초등' && currentGrade <= 6) {
+                document.querySelector(`input[name="gradeYear"][value="${currentYear}"]`).checked = true;
+            } else if (schoolLevel === '중등' && currentGrade > 6 && currentGrade <= 9) {
+                document.querySelector(`input[name="gradeYear"][value="${currentYear}"]`).checked = true;
+            } else if (schoolLevel === '고등' && currentGrade > 9) {
+                document.querySelector(`input[name="gradeYear"][value="${currentYear}"]`).checked = true;
+            }
+        }
+        
+        // 페이지 로드 시 학년 옵션 설정
+        updateGradeOptions();
+        
+        // 학교급 선택 시 학년 옵션 변경
+        document.querySelectorAll('input[name="schoolLevel"]').forEach(radio => {
+            radio.addEventListener('change', updateGradeOptions);
+        });
+        
+        // 폼 제출 처리
+        document.getElementById('studentEditForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const schoolLevel = document.querySelector('input[name="schoolLevel"]:checked');
+            const gradeYear = document.querySelector('input[name="gradeYear"]:checked');
+            
+            if (!schoolLevel || !gradeYear) {
+                alert('학교급과 학년을 선택해주세요.');
+                return;
+            }
+            
+            // grade와 year 계산
+            let grade, year;
+            if (schoolLevel.value === '초등') {
+                grade = parseInt(gradeYear.value);
+                year = parseInt(gradeYear.value);
+            } else if (schoolLevel.value === '중등') {
+                grade = 6 + parseInt(gradeYear.value);
+                year = parseInt(gradeYear.value);
+            } else { // 고등
+                grade = 9 + parseInt(gradeYear.value);
+                year = parseInt(gradeYear.value);
+            }
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                school: document.getElementById('school').value || schoolLevel.value,
+                grade: grade,
+                year: year,
+                sphone: document.getElementById('sphone').value,
+                pphone: document.getElementById('pphone').value,
+                address: document.getElementById('address').value,
+                specialty: document.getElementById('specialty').value,
+                memo: document.getElementById('memo').value
+            };
+            
+            try {
+                const response = await fetch(`/student/${studentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.href = '/student/manage';
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

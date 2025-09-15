@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퇴원생 관리 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .search-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        
+        .search-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .table-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .btn-rejoin {
+            background-color: #28a745;
+            color: white;
+            border: none;
+        }
+        
+        .btn-rejoin:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">퇴원생 관리</h2>
+            <a href="/student/manage" class="btn btn-secondary">재원생 관리</a>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-number"><%= students ? students.length : 0 %></div>
+                <div class="stat-label">전체 퇴원생</div>
+            </div>
+            <% if (students && students.length > 0) { %>
+                <% 
+                const thisMonth = new Date().toISOString().slice(0, 7);
+                const thisMonthCount = students.filter(s => s.exit_date && s.exit_date.startsWith(thisMonth)).length;
+                %>
+                <div class="stat-card">
+                    <div class="stat-number"><%= thisMonthCount %></div>
+                    <div class="stat-label">이번 달 퇴원</div>
+                </div>
+            <% } %>
+        </div>
+        
+        <div class="search-section">
+            <form class="search-form" method="GET" action="/student/exited">
+                <div class="search-group">
+                    <label class="search-label">검색어</label>
+                    <input type="text" class="form-control" name="search" placeholder="이름, 학생번호, 학부모번호" value="<%= typeof search !== 'undefined' ? search : '' %>">
+                </div>
+                
+                <div class="search-group">
+                    <label class="search-label">학교</label>
+                    <select class="form-control" name="school">
+                        <option value="all">전체</option>
+                        <% if (typeof schools !== 'undefined' && schools.length > 0) { %>
+                            <% schools.forEach(function(s) { %>
+                                <option value="<%= s.school %>" <%= (typeof selectedSchool !== 'undefined' && selectedSchool === s.school) ? 'selected' : '' %>><%= s.school %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="search-group">
+                    <label class="search-label">정렬</label>
+                    <select class="form-control" name="sort">
+                        <option value="name_asc" <%= (typeof selectedSort !== 'undefined' && selectedSort === 'name_asc') ? 'selected' : '' %>>이름 (가나다순)</option>
+                        <option value="name_desc" <%= (typeof selectedSort !== 'undefined' && selectedSort === 'name_desc') ? 'selected' : '' %>>이름 (역순)</option>
+                        <option value="exit_date_desc" <%= (typeof selectedSort !== 'undefined' && selectedSort === 'exit_date_desc') ? 'selected' : '' %>>퇴원일 (최신순)</option>
+                        <option value="exit_date_asc" <%= (typeof selectedSort !== 'undefined' && selectedSort === 'exit_date_asc') ? 'selected' : '' %>>퇴원일 (오래된순)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">검색</button>
+                <a href="/student/exited" class="btn btn-secondary">초기화</a>
+            </form>
+        </div>
+        
+        <div class="table-section">
+            <% if (students && students.length > 0) { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>학교</th>
+                            <th>학년</th>
+                            <th>학생번호</th>
+                            <th>학부모번호</th>
+                            <th>가입일</th>
+                            <th>퇴원일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% students.forEach(function(student) { %>
+                        <tr>
+                            <td><%= student.name %></td>
+                            <td><%= student.school %></td>
+                            <td>
+                                <% 
+                                let schoolLevel = '';
+                                let displayGrade = student.year;
+                                
+                                if (student.grade <= 6) {
+                                    schoolLevel = '초';
+                                } else if (student.grade <= 9) {
+                                    schoolLevel = '중';
+                                } else {
+                                    schoolLevel = '고';
+                                }
+                                %>
+                                <%= schoolLevel %><%= displayGrade %>
+                            </td>
+                            <td><%= student.sphone || '-' %></td>
+                            <td><%= student.pphone || '-' %></td>
+                            <td><%= student.date %></td>
+                            <td><%= student.exit_date || '-' %></td>
+                            <td>
+                                <button class="btn btn-sm btn-rejoin" onclick="rejoinStudent(<%= student.id %>)">재원</button>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎓</div>
+                    <p>퇴원한 학생이 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        async function rejoinStudent(studentId) {
+            if (!confirm('이 학생을 재원 처리하시겠습니까?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/student/${studentId}/rejoin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.href = '/student/manage';
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

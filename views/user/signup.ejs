@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        input[type="email"], input[type="password"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+
+        input:disabled {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #1976d2;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .success {
+            color: #4caf50;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .error {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #2196f3;
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .password-requirements {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/image/logo.png" alt="이든배움국어학원">
+        </div>
+
+        <h1>회원가입</h1>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <div class="input-group">
+                    <input type="email" id="email" name="email" placeholder="이메일을 입력하세요" required>
+                    <button type="button" id="checkEmailBtn">중복확인</button>
+                </div>
+                <div id="emailMessage"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="studentPhone">학생번호</label>
+                <input type="text" id="studentPhone" name="studentPhone" value="<%= studentInfo.sphone %>" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="parentPhone">학부모번호</label>
+                <input type="text" id="parentPhone" name="parentPhone" value="<%= studentInfo.pphone %>" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+                <div class="password-requirements">6자리 이상 입력해주세요</div>
+                <div id="passwordMessage"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">비밀번호 확인</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="비밀번호를 다시 입력하세요" required>
+                <div id="confirmPasswordMessage"></div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="signupBtn">회원가입</button>
+        </form>
+
+        <div class="back-link">
+            <a href="/user/register">이전 단계로</a>
+        </div>
+    </div>
+
+    <script>
+        const emailInput = document.getElementById('email');
+        const checkEmailBtn = document.getElementById('checkEmailBtn');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const signupBtn = document.getElementById('signupBtn');
+        const signupForm = document.getElementById('signupForm');
+
+        let emailChecked = false;
+
+        // 이메일 중복 확인
+        checkEmailBtn.addEventListener('click', async function() {
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showMessage('emailMessage', '이메일을 입력해주세요.', 'error');
+                return;
+            }
+
+            if (!isValidEmail(email)) {
+                showMessage('emailMessage', '올바른 이메일 형식을 입력해주세요.', 'error');
+                return;
+            }
+
+            try {
+                checkEmailBtn.disabled = true;
+                checkEmailBtn.textContent = '확인 중...';
+
+                const response = await fetch('/user/check-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.available) {
+                        showMessage('emailMessage', data.message, 'success');
+                        emailChecked = true;
+                        emailInput.disabled = true;
+                        checkEmailBtn.textContent = '확인완료';
+                    } else {
+                        showMessage('emailMessage', data.message, 'error');
+                        emailChecked = false;
+                        checkEmailBtn.disabled = false;
+                        checkEmailBtn.textContent = '중복확인';
+                    }
+                } else {
+                    showMessage('emailMessage', data.error, 'error');
+                    checkEmailBtn.disabled = false;
+                    checkEmailBtn.textContent = '중복확인';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('emailMessage', '오류가 발생했습니다. 다시 시도해주세요.', 'error');
+                checkEmailBtn.disabled = false;
+                checkEmailBtn.textContent = '중복확인';
+            }
+        });
+
+        // 이메일 입력 변경 시 중복확인 초기화
+        emailInput.addEventListener('input', function() {
+            if (emailChecked) {
+                emailChecked = false;
+                emailInput.disabled = false;
+                checkEmailBtn.disabled = false;
+                checkEmailBtn.textContent = '중복확인';
+                document.getElementById('emailMessage').textContent = '';
+            }
+        });
+
+        // 비밀번호 검증
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            if (password.length > 0 && password.length < 6) {
+                showMessage('passwordMessage', '비밀번호는 6자리 이상이어야 합니다.', 'error');
+            } else {
+                document.getElementById('passwordMessage').textContent = '';
+            }
+        });
+
+        // 비밀번호 확인 검증
+        confirmPasswordInput.addEventListener('input', function() {
+            const password = passwordInput.value;
+            const confirmPassword = this.value;
+
+            if (confirmPassword.length > 0) {
+                if (password !== confirmPassword) {
+                    showMessage('confirmPasswordMessage', '비밀번호가 일치하지 않습니다.', 'error');
+                } else {
+                    showMessage('confirmPasswordMessage', '비밀번호가 일치합니다.', 'success');
+                }
+            } else {
+                document.getElementById('confirmPasswordMessage').textContent = '';
+            }
+        });
+
+        // 회원가입 처리
+        signupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!emailChecked) {
+                alert('이메일 중복확인을 해주세요.');
+                return;
+            }
+
+            const formData = new FormData(signupForm);
+            const email = formData.get('email');
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+
+            if (!email || !password || !confirmPassword) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('비밀번호는 6자리 이상이어야 합니다.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            try {
+                signupBtn.disabled = true;
+                signupBtn.textContent = '가입 중...';
+
+                const response = await fetch('/user/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        confirmPassword: confirmPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    window.location.href = data.redirectUrl;
+                } else {
+                    alert(data.error);
+                    signupBtn.disabled = false;
+                    signupBtn.textContent = '회원가입';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다. 다시 시도해주세요.');
+                signupBtn.disabled = false;
+                signupBtn.textContent = '회원가입';
+            }
+        });
+
+        function showMessage(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = type;
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수강 관리 - <%= student.name %> - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .student-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .student-info h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .register-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .register-form {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .courses-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        .autocomplete-wrapper {
+            position: relative;
+        }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+        }
+        
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .autocomplete-active {
+            background-color: #667eea !important;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">수강 관리</h2>
+            <a href="/student/manage" class="btn btn-secondary">목록으로</a>
+        </div>
+        
+        <div class="student-info">
+            <h4>학생 정보</h4>
+            <div>
+                <strong>이름:</strong> <%= student.name %> | 
+                <strong>학교:</strong> <%= student.school %> | 
+                <strong>학년:</strong> 
+                <% 
+                let schoolLevel = '';
+                let displayGrade = student.year;
+                
+                if (student.grade <= 6) {
+                    schoolLevel = '초';
+                } else if (student.grade <= 9) {
+                    schoolLevel = '중';
+                } else {
+                    schoolLevel = '고';
+                }
+                %>
+                <%= schoolLevel %><%= displayGrade %>
+            </div>
+        </div>
+        
+        <div class="register-section">
+            <h3 class="section-title">수강반 등록</h3>
+            <form class="register-form" id="courseRegisterForm">
+                <div class="form-group">
+                    <label class="form-label">시작날짜</label>
+                    <input type="date" class="form-control" id="startDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">수강반</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" class="form-control" id="className" placeholder="수강반명 입력" required>
+                        <input type="hidden" id="classId">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">수강등록</button>
+            </form>
+        </div>
+        
+        <div class="courses-section">
+            <h3 class="section-title">수강 정보</h3>
+            <% if (courses && courses.length > 0) { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>수강반 이름</th>
+                            <th>시작일</th>
+                            <th>종강일</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% courses.forEach(function(course) { %>
+                        <tr>
+                            <td><%= course.class_name %></td>
+                            <td><%= course.start_time %></td>
+                            <td><%= course.end_time || '-' %></td>
+                            <td>
+                                <span class="status-badge <%= course.status === 1 ? 'status-active' : 'status-inactive' %>">
+                                    <%= course.status === 1 ? '진행중' : '종강' %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (course.status === 1) { %>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="toggleCourseStatus(<%= course.id %>, 1)">종강처리</button>
+                                <% } else { %>
+                                    <button class="btn btn-sm btn-outline-success" onclick="toggleCourseStatus(<%= course.id %>, 0)">재시작</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>등록된 수강 정보가 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        // 수강반 자동완성 데이터
+        const classes = <%- JSON.stringify(classes) %>;
+        const studentId = <%= student.id %>;
+        
+        // 자동완성 기능
+        function autocomplete(inp, arr) {
+            let currentFocus;
+            
+            inp.addEventListener("input", function(e) {
+                let val = this.value;
+                closeAllLists();
+                if (!val) {
+                    document.getElementById('classId').value = '';
+                    return false;
+                }
+                currentFocus = -1;
+                
+                let div = document.createElement("DIV");
+                div.setAttribute("id", this.id + "autocomplete-list");
+                div.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(div);
+                
+                for (let i = 0; i < arr.length; i++) {
+                    if (arr[i].name.toLowerCase().includes(val.toLowerCase())) {
+                        let item = document.createElement("DIV");
+                        let matchStart = arr[i].name.toLowerCase().indexOf(val.toLowerCase());
+                        let matchEnd = matchStart + val.length;
+                        
+                        item.innerHTML = arr[i].name.substr(0, matchStart);
+                        item.innerHTML += "<strong>" + arr[i].name.substr(matchStart, val.length) + "</strong>";
+                        item.innerHTML += arr[i].name.substr(matchEnd);
+                        item.innerHTML += "<input type='hidden' value='" + arr[i].name + "' data-id='" + arr[i].id + "'>";
+                        
+                        item.addEventListener("click", function(e) {
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            document.getElementById('classId').value = this.getElementsByTagName("input")[0].getAttribute('data-id');
+                            closeAllLists();
+                        });
+                        div.appendChild(item);
+                    }
+                }
+            });
+            
+            inp.addEventListener("keydown", function(e) {
+                let x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) {
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            
+            function addActive(x) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            
+            function removeActive(x) {
+                for (let i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            
+            function closeAllLists(elmnt) {
+                let x = document.getElementsByClassName("autocomplete-items");
+                for (let i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
+        
+        // 자동완성 초기화
+        autocomplete(document.getElementById("className"), classes);
+        
+        // 오늘 날짜 설정
+        document.getElementById('startDate').valueAsDate = new Date();
+        
+        // 수강반 등록 폼 제출
+        document.getElementById('courseRegisterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const classId = document.getElementById('classId').value;
+            const className = document.getElementById('className').value;
+            const startDate = document.getElementById('startDate').value;
+            
+            if (!classId) {
+                alert('유효한 수강반을 선택해주세요.');
+                return;
+            }
+            
+            // 선택한 수강반이 목록에 있는지 확인
+            const validClass = classes.find(c => c.id == classId && c.name === className);
+            if (!validClass) {
+                alert('유효한 수강반을 선택해주세요.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/student/${studentId}/courses/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        classId: classId,
+                        startTime: startDate
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        });
+        
+        // 수강 상태 토글
+        async function toggleCourseStatus(courseId, currentStatus) {
+            const action = currentStatus === 1 ? '종강' : '재시작';
+            
+            if (!confirm(`이 수강반을 ${action} 처리하시겠습니까?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/student/courses/${courseId}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

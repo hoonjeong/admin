@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>독서 교재 만들기 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .material-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .upload-area:hover {
+            background: #e3f2fd;
+            border-color: #0056b3;
+        }
+        .upload-area.dragover {
+            background: #e3f2fd;
+            border-color: #0056b3;
+        }
+        .upload-icon {
+            font-size: 48px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .file-input {
+            display: none;
+        }
+        .selected-file {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+        .options-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .generate-btn {
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+        .generate-btn:hover {
+            background: #0056b3;
+        }
+        .generate-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .modal-backdrop-custom {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+        .loading-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            z-index: 1050;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .result-content {
+            min-height: 400px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background: #f8f9fa;
+            white-space: pre-wrap;
+            font-family: 'Noto Sans KR', sans-serif;
+            line-height: 1.8;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+        }
+        .copy-btn:hover {
+            background: #218838;
+        }
+        .download-txt-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        .download-txt-btn:hover {
+            background: #138496;
+        }
+        .download-word-btn {
+            background: #6610f2;
+            color: white;
+        }
+        .download-word-btn:hover {
+            background: #520dc2;
+        }
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .info-box h5 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .info-box ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container mt-4">
+        <h2 class="mb-4">독서 교재 만들기</h2>
+        
+        <div class="material-container">
+            <!-- 업로드 섹션 -->
+            <div class="upload-section">
+                <h4>책/문서 파일 업로드</h4>
+                <p class="text-muted">독서 교재로 만들 책이나 문서를 업로드하세요. (JPG, PNG, PDF, DOC, DOCX, HWP 지원)</p>
+                
+                <div class="upload-area" onclick="document.getElementById('bookFile').click()">
+                    <div class="upload-icon">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h5>파일을 선택하거나 여기로 드래그하세요</h5>
+                    <p class="text-muted">최대 10MB까지 업로드 가능</p>
+                </div>
+                
+                <input type="file" id="bookFile" class="file-input" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.hwp">
+                
+                <div class="selected-file" id="selectedFile">
+                    <strong>선택된 파일:</strong> <span id="fileName"></span>
+                </div>
+            </div>
+            
+            <!-- 옵션 섹션 -->
+            <div class="options-section">
+                <h4>교재 생성 옵션</h4>
+                
+                <div class="info-box">
+                    <h5>📚 독서 교재 생성 안내</h5>
+                    <ul>
+                        <li>업로드한 책의 내용을 읽은 사람만이 풀 수 있는 문제를 생성합니다</li>
+                        <li>책 내용의 특징과 주제에 맞는 문제를 구성합니다</li>
+                        <li>내용 이해, 어휘, 주제 파악, 비판적 사고 등 다양한 유형의 문제를 포함합니다</li>
+                    </ul>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="difficulty">난이도</label>
+                        <select id="difficulty" name="difficulty">
+                            <option value="하">하 (기초)</option>
+                            <option value="중" selected>중 (표준)</option>
+                            <option value="상">상 (심화)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="target">대상</label>
+                        <select id="target" name="target">
+                            <option value="초등 저학년">초등 저학년 (1-3학년)</option>
+                            <option value="초등 고학년">초등 고학년 (4-6학년)</option>
+                            <option value="중학생" selected>중학생</option>
+                            <option value="고등학생">고등학생</option>
+                            <option value="성인">성인</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="questionCount">문제 개수</label>
+                        <select id="questionCount" name="questionCount">
+                            <option value="5">5개</option>
+                            <option value="10" selected>10개</option>
+                            <option value="15">15개</option>
+                            <option value="20">20개</option>
+                            <option value="25">25개</option>
+                            <option value="30">30개</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="characteristics">교재 특징</label>
+                    <input type="text" id="characteristics" name="characteristics" 
+                           placeholder="예: 고전문학, 현대소설, 과학도서, 역사책, 동화책 등">
+                </div>
+                
+                <div class="form-group">
+                    <label for="additionalRequests">추가 요청사항</label>
+                    <textarea id="additionalRequests" name="additionalRequests" 
+                              placeholder="특별히 포함하고 싶은 문제 유형이나 강조하고 싶은 부분을 입력하세요.
+예: 등장인물의 성격 분석 문제 추가, 시대적 배경 관련 문제 포함, 어휘 문제 비중 높이기 등"></textarea>
+                </div>
+                
+                <button class="generate-btn" id="generateBtn" onclick="generateMaterial()">
+                    <i class="bi bi-magic"></i> 독서 교재 생성하기
+                </button>
+            </div>
+            
+            <!-- 로딩 모달 -->
+            <div class="modal-backdrop-custom" id="modalBackdrop"></div>
+            <div class="loading-modal" id="loadingModal">
+                <div class="spinner"></div>
+                <h4>독서 교재를 생성하고 있습니다...</h4>
+                <p class="text-muted">AI가 책을 분석하고 문제를 만들고 있습니다. 잠시만 기다려주세요.</p>
+            </div>
+            
+            <!-- 결과 섹션 -->
+            <div class="result-section" id="resultSection">
+                <h4>생성된 독서 교재</h4>
+                <div class="result-content" id="resultContent" contenteditable="true"></div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn copy-btn" onclick="copyToClipboard()">
+                        <i class="bi bi-clipboard"></i> 클립보드에 복사하기
+                    </button>
+                    <button class="action-btn download-txt-btn" onclick="downloadAsTxt()">
+                        <i class="bi bi-file-text"></i> TXT로 다운로드
+                    </button>
+                    <button class="action-btn download-word-btn" onclick="downloadAsWord()">
+                        <i class="bi bi-file-word"></i> Word로 다운로드
+                    </button>
+                    <button class="action-btn reset-btn" onclick="resetGenerator()">
+                        <i class="bi bi-arrow-clockwise"></i> 다시 시작
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 드래그 앤 드롭 처리
+        const uploadArea = document.querySelector('.upload-area');
+        const fileInput = document.getElementById('bookFile');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+        
+        // 파일 선택 처리
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        // 이미 업로드된 파일 목록 저장
+        let uploadedFiles = [];
+        
+        // 페이지 로드 시 기존 파일 목록 가져오기
+        async function loadUploadedFiles() {
+            try {
+                const response = await fetch('/ai/api/material-files');
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedFiles = data.files || [];
+                }
+            } catch (error) {
+                // 파일 목록 로드 실패
+            }
+        }
+        
+        // 페이지 로드 시 실행
+        loadUploadedFiles();
+        
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                // 중복 파일명 체크
+                const isDuplicate = uploadedFiles.some(uploadedFile => 
+                    uploadedFile.toLowerCase() === file.name.toLowerCase()
+                );
+                
+                if (isDuplicate) {
+                    if (!confirm(`"${file.name}" 파일이 이미 존재합니다. 계속 진행하시겠습니까?`)) {
+                        fileInput.value = '';
+                        document.getElementById('selectedFile').style.display = 'none';
+                        document.getElementById('generateBtn').style.display = 'none';
+                        return;
+                    }
+                }
+                
+                // 파일 크기 표시
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const sizeText = fileSize > 10 ? ` (${fileSize}MB - ⚠️ 파일이 너무 큽니다)` : ` (${fileSize}MB)`;
+                
+                document.getElementById('selectedFile').style.display = 'block';
+                document.getElementById('fileName').textContent = file.name + sizeText;
+                document.getElementById('generateBtn').style.display = 'inline-block';
+                
+                // 파일 크기가 10MB 초과하면 버튼 비활성화
+                if (file.size > 10 * 1024 * 1024) {
+                    document.getElementById('generateBtn').disabled = true;
+                    document.getElementById('generateBtn').textContent = '파일 크기 초과 (10MB 제한)';
+                } else {
+                    document.getElementById('generateBtn').disabled = false;
+                    document.getElementById('generateBtn').innerHTML = '<i class="bi bi-magic"></i> 독서 교재 생성하기';
+                }
+            }
+        }
+        
+        // 독서 교재 생성
+        async function generateMaterial() {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            
+            // 파일 크기 검증 (10MB)
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('파일 크기가 10MB를 초과합니다.');
+                return;
+            }
+            
+            // 파일 타입 검증
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+                                 'application/pdf', 'application/msword', 
+                                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.hwp'];
+            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+            
+            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                alert('지원하지 않는 파일 형식입니다.\n\n허용된 형식: JPG, PNG, GIF, PDF, DOC, DOCX, HWP');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('bookFile', file);
+            formData.append('difficulty', document.getElementById('difficulty').value);
+            formData.append('target', document.getElementById('target').value);
+            formData.append('characteristics', document.getElementById('characteristics').value);
+            formData.append('questionCount', document.getElementById('questionCount').value);
+            formData.append('additionalRequests', document.getElementById('additionalRequests').value);
+            
+            // UI 상태 변경 - 모달 표시
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('modalBackdrop').style.display = 'block';
+            document.getElementById('loadingModal').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            // Generating reading material
+            
+            try {
+                const response = await fetch('/ai/api/generate-reading-material', {
+                    method: 'POST',
+                    body: formData,
+                    signal: AbortSignal.timeout(120000) // 120초 타임아웃
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 결과 표시
+                    document.getElementById('resultContent').textContent = result.content;
+                    document.getElementById('modalBackdrop').style.display = 'none';
+                    document.getElementById('loadingModal').style.display = 'none';
+                    document.getElementById('resultSection').style.display = 'block';
+                    
+                    // 파일 첨부 영역으로 포커스 이동 후 결과 영역으로 스크롤
+                    fileInput.focus();
+                    uploadArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 500);
+                    
+                    // 성공 메시지
+                    // Reading material generated successfully
+                } else {
+                    const errorMessage = result.error || '교재 생성에 실패했습니다.';
+                    alert(errorMessage);
+                    document.getElementById('modalBackdrop').style.display = 'none';
+                    document.getElementById('loadingModal').style.display = 'none';
+                    document.getElementById('generateBtn').disabled = false;
+                    console.error('Generation failed:', errorMessage);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMessage = '오류가 발생했습니다.';
+                
+                if (error.name === 'AbortError') {
+                    errorMessage = '요청 시간이 초과되었습니다. 다시 시도해주세요.';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                alert(errorMessage);
+                document.getElementById('modalBackdrop').style.display = 'none';
+                document.getElementById('loadingModal').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+        
+        // 클립보드에 복사
+        function copyToClipboard() {
+            const content = document.getElementById('resultContent').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+                alert('복사에 실패했습니다.');
+            });
+        }
+        
+        // TXT로 다운로드
+        function downloadAsTxt() {
+            const content = document.getElementById('resultContent').innerText;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '독서_교재_' + new Date().toISOString().split('T')[0] + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // Word로 다운로드
+        function downloadAsWord() {
+            const content = document.getElementById('resultContent').innerText;
+            const preHtml = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word' 
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>독서 교재</title>
+                    <style>
+                        body { font-family: 'Malgun Gothic', sans-serif; line-height: 1.8; }
+                        pre { white-space: pre-wrap; font-family: 'Malgun Gothic', sans-serif; }
+                    </style>
+                </head>
+                <body>
+                    <pre>`;
+            const postHtml = `</pre>
+                </body>
+                </html>`;
+            const html = preHtml + content + postHtml;
+            
+            const blob = new Blob([html], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '독서_교재_' + new Date().toISOString().split('T')[0] + '.doc';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // 초기화
+        function resetGenerator() {
+            fileInput.value = '';
+            document.getElementById('selectedFile').style.display = 'none';
+            document.getElementById('generateBtn').style.display = 'none';
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('resultContent').textContent = '';
+            
+            // 폼 초기화
+            document.getElementById('difficulty').value = '중';
+            document.getElementById('target').value = '중학생';
+            document.getElementById('questionCount').value = '10';
+            document.getElementById('characteristics').value = '';
+            document.getElementById('additionalRequests').value = '';
+        }
+    </script>
+</body>
+</html>

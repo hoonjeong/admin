@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .dashboard-container {
+            padding: 30px;
+        }
+        .section-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .class-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .class-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .class-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .class-count {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .student-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .student-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .student-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .sort-buttons {
+            margin-bottom: 15px;
+        }
+        .sort-buttons .btn-group .btn {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .sort-buttons .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .sort-buttons .btn-outline-primary {
+            color: #667eea;
+            border-color: #667eea;
+        }
+        .sort-buttons .btn-outline-primary:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="dashboard-container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="section-title mb-0">수강반</h3>
+                    <div class="sort-buttons">
+                        <div class="btn-group" role="group">
+                            <a href="/admin/dashboard?sort=name" 
+                               class="btn <%= currentSort === 'name' ? 'btn-primary' : 'btn-outline-primary' %> btn-sm">
+                                <i class="bi bi-sort-alpha-down"></i> 이름순
+                            </a>
+                            <a href="/admin/dashboard?sort=count" 
+                               class="btn <%= currentSort === 'count' ? 'btn-primary' : 'btn-outline-primary' %> btn-sm">
+                                <i class="bi bi-sort-numeric-down"></i> 인원순
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3"></div>
+                <% if (classes && classes.length > 0) { %>
+                    <% classes.forEach(function(classItem) { %>
+                    <div class="class-card" onclick="location.href='/admin/class/<%= classItem.id %>'">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="class-name"><%= classItem.name %></span>
+                            <span class="class-count">(<%= classItem.studentCount %>명)</span>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="bi bi-folder2-open"></i>
+                        <p>등록된 수강반이 없습니다.</p>
+                    </div>
+                <% } %>
+            </div>
+            
+            <div class="col-md-6">
+                <h3 class="section-title">이번달 신규생</h3>
+                <% if (newStudents && newStudents.length > 0) { %>
+                    <div class="student-table">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>학생이름</th>
+                                    <th>학생번호</th>
+                                    <th>학부모번호</th>
+                                    <th>등록일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% newStudents.forEach(function(student) { %>
+                                <tr>
+                                    <td><a href="/admin/student/<%= student.id %>" style="text-decoration: none; color: #667eea; font-weight: 500;"><%= student.name %></a></td>
+                                    <td><%= student.sphone %></td>
+                                    <td><%= student.pphone %></td>
+                                    <td><%= student.insert_date %></td>
+                                </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="bi bi-person-plus"></i>
+                        <p>이번달 신규생이 없습니다.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+</body>
+</html>

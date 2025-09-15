@@ -1,0 +1,103 @@
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">관리자 홈</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <% if (user.code === 'T' || user.code === 'O') { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="teacherMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        선생님메뉴
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/dashboard">홈</a></li>
+                        <li><a class="dropdown-item" href="/teacher/lectures">내강의 보기</a></li>
+                        <li><a class="dropdown-item" href="/teacher/sms">문자 발송</a></li>
+                    </ul>
+                </li>
+                <% } %>
+                <% if (user.code === 'O') { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="aiMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        AI
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/ai/exam-analyzer">시험지 분석기</a></li>
+                        <li><a class="dropdown-item" href="/ai/reading-material">독서 교재 만들기</a></li>
+                        <li><a class="dropdown-item" href="/ai/performance-review">수행평가 첨삭</a></li>
+                        <li><a class="dropdown-item" href="/ai/research-topic">연구 주제 추천</a></li>
+                        <li><a class="dropdown-item" href="/ai/blog-generator">블로그 컨텐츠 생성기</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="examMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        기출문제
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/exam/add">학교별 기출 추가</a></li>
+                        <li><a class="dropdown-item" href="/exam/list">기출문제 관리</a></li>
+                    </ul>
+                </li>
+                <% } %>
+                <% if (user.code === 'O') { %>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="postMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        게시글
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/post/write">글쓰기</a></li>
+                        <li><a class="dropdown-item" href="/post/list">글관리</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="lectureMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        영상강의
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/lecture/add">강의 추가</a></li>
+                        <li><a class="dropdown-item" href="/lecture/list">강의 관리</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="classMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        수강반
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/class/add">수강반 추가</a></li>
+                        <li><a class="dropdown-item" href="/class/edit">수강반 관리</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="studentMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        수강생
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/student/add">수강생 추가</a></li>
+                        <li><a class="dropdown-item" href="/student/manage">수강생 관리</a></li>
+                        <li><a class="dropdown-item" href="/student/exited">퇴원생 관리</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="smsMenuDropdown" role="button" data-bs-toggle="dropdown">
+                        문자발송
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/sms/send">문자 발송</a></li>
+                        <li><a class="dropdown-item" href="/sms/history">발송 히스토리</a></li>
+                    </ul>
+                </li>
+                <% } %>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showPreparing(); return false;">내정보</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/logout">로그아웃</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

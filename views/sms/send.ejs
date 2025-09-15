@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문자 발송 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .sms-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        .left-panel {
+            flex: 1;
+        }
+        .right-panel {
+            width: 350px;
+        }
+        .grade-section {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .grade-header {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: -10px -10px 10px -10px;
+            border-radius: 5px 5px 0 0;
+            font-weight: bold;
+        }
+        .grade-header input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .class-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .class-item {
+            padding: 5px;
+        }
+        .class-item input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .action-buttons {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .student-section {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            display: none;
+        }
+        .students-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        .students-table thead {
+            background: #007bff;
+            color: white;
+        }
+        .students-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #dee2e6;
+        }
+        .students-table th input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+        .students-table th label {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        .students-table td {
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        .students-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .students-table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .students-table tbody tr:nth-child(even):hover {
+            background: #f0f0f0;
+        }
+        .phone-checkbox {
+            margin-right: 8px;
+        }
+        .phone-info {
+            display: flex;
+            align-items: center;
+        }
+        .phone-label {
+            font-size: 13px;
+            color: #666;
+        }
+        .message-section {
+            margin-top: 20px;
+        }
+        .message-section textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .send-button {
+            margin-top: 10px;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .send-button:hover {
+            background: #218838;
+        }
+        .memo-section, .history-section {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .memo-section h3, .history-section h3 {
+            margin-top: 0;
+        }
+        .memo-section textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container mt-4">
+        <h2 class="mb-4">문자 발송</h2>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <!-- 고3 반 -->
+                <% if (classifiedClasses.high3.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="high3-all" onchange="selectGrade('high3')">
+                        <label for="high3-all">고3 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.high3.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox high3" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 고2 반 -->
+                <% if (classifiedClasses.high2.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="high2-all" onchange="selectGrade('high2')">
+                        <label for="high2-all">고2 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.high2.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox high2" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 고1 반 -->
+                <% if (classifiedClasses.high1.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="high1-all" onchange="selectGrade('high1')">
+                        <label for="high1-all">고1 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.high1.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox high1" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 중3 반 -->
+                <% if (classifiedClasses.middle3.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="middle3-all" onchange="selectGrade('middle3')">
+                        <label for="middle3-all">중3 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.middle3.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox middle3" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 중2 반 -->
+                <% if (classifiedClasses.middle2.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="middle2-all" onchange="selectGrade('middle2')">
+                        <label for="middle2-all">중2 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.middle2.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox middle2" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 중1 반 -->
+                <% if (classifiedClasses.middle1.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="middle1-all" onchange="selectGrade('middle1')">
+                        <label for="middle1-all">중1 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.middle1.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox middle1" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- 기타 반 -->
+                <% if (classifiedClasses.other.length > 0) { %>
+                <div class="grade-section">
+                    <div class="grade-header">
+                        <input type="checkbox" id="other-all" onchange="selectGrade('other')">
+                        <label for="other-all">기타 전체</label>
+                    </div>
+                    <div class="class-list">
+                        <% classifiedClasses.other.forEach(function(classItem) { %>
+                        <div class="class-item">
+                            <input type="checkbox" class="class-checkbox other" value="<%= classItem.id %>" data-name="<%= classItem.name %>">
+                            <label><%= classItem.name %></label>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="loadStudents()">선택반 불러오기</button>
+                </div>
+
+                <!-- 학생 목록 섹션 -->
+                <div id="student-section" class="student-section">
+                    <h3>학생 목록</h3>
+                    <div id="students-container"></div>
+                </div>
+
+                <!-- 메시지 입력 섹션 -->
+                <div class="message-section">
+                    <h3>문자 내용</h3>
+                    <textarea id="message-content" placeholder="발송할 문자 내용을 입력하세요..."></textarea>
+                    <button class="send-button" onclick="sendSMS()">문자 발송</button>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <!-- 메모 섹션 -->
+                <div class="memo-section">
+                    <h3>메모</h3>
+                    <textarea id="memo-content" placeholder="메모를 입력하세요..."><%= memo %></textarea>
+                    <button class="btn btn-secondary" onclick="saveMemo()" style="width: 100%; margin-top: 10px;">메모 저장</button>
+                </div>
+
+                <!-- 히스토리 섹션 -->
+                <div class="history-section">
+                    <h3>최근 발송 내역</h3>
+                    <div class="history-list" id="history-list">
+                        <p>최근 발송 내역이 없습니다.</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="location.href='/sms/history'" style="width: 100%; margin-top: 10px;">전체 내역 보기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 학년별 전체 선택
+        function selectGrade(grade) {
+            const isChecked = document.getElementById(grade + '-all').checked;
+            const checkboxes = document.querySelectorAll('.' + grade);
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        }
+
+        // 학생 목록 불러오기
+        async function loadStudents() {
+            const selectedClasses = [];
+            document.querySelectorAll('.class-checkbox:checked').forEach(checkbox => {
+                selectedClasses.push(checkbox.value);
+            });
+
+            if (selectedClasses.length === 0) {
+                alert('선택된 반이 없습니다.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/sms/api/get-students', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ classIds: selectedClasses })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    displayStudents(result.data);
+                    document.getElementById('student-section').style.display = 'block';
+                } else {
+                    alert('학생 목록을 불러오는데 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 학생 목록 표시
+        function displayStudents(classData) {
+            const container = document.getElementById('students-container');
+            container.innerHTML = '';
+
+            // 통합 테이블 생성
+            let tableHTML = `
+                <table class="students-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">반 이름</th>
+                            <th width="15%">학생 이름</th>
+                            <th width="35%">
+                                <input type="checkbox" id="global-student-check" onclick="selectAllStudentsGlobal(event)">
+                                <label for="global-student-check" style="margin-left: 5px; cursor: pointer;">학생 번호 (전체선택)</label>
+                            </th>
+                            <th width="35%">
+                                <input type="checkbox" id="global-parent-check" onclick="selectAllParentsGlobal(event)">
+                                <label for="global-parent-check" style="margin-left: 5px; cursor: pointer;">학부모 번호 (전체선택)</label>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // 모든 학생을 하나의 테이블에 표시
+            classData.forEach(classInfo => {
+                classInfo.students.forEach(student => {
+                    tableHTML += `
+                        <tr>
+                            <td>${classInfo.className}</td>
+                            <td><strong>${student.name}</strong></td>
+                            <td>
+                                <div class="phone-info">
+                                    <input type="checkbox" class="student-phone phone-checkbox" 
+                                           value="${student.studentPhone}" 
+                                           data-name="${student.name}" 
+                                           data-type="student"
+                                           ${(!student.studentPhone || student.studentPhone === '-') ? 'disabled' : ''}>
+                                    <span class="phone-label">학생번호: ${student.studentPhone || '번호 없음'}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="phone-info">
+                                    <input type="checkbox" class="parent-phone phone-checkbox" 
+                                           value="${student.parentPhone}" 
+                                           data-name="${student.name}" 
+                                           data-type="parent"
+                                           ${(!student.parentPhone || student.parentPhone === '-') ? 'disabled' : ''}>
+                                    <span class="phone-label">학부모번호: ${student.parentPhone || '번호 없음'}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            const tableContainer = document.createElement('div');
+            tableContainer.innerHTML = tableHTML;
+            container.appendChild(tableContainer);
+        }
+
+        // 전체 학생 선택
+        function selectAllStudentsGlobal(event) {
+            const globalCheck = document.getElementById('global-student-check');
+            const checkboxes = document.querySelectorAll('.student-phone:not(:disabled)');
+            checkboxes.forEach(cb => {
+                cb.checked = globalCheck.checked;
+            });
+        }
+
+        // 전체 학부모 선택
+        function selectAllParentsGlobal(event) {
+            const globalCheck = document.getElementById('global-parent-check');
+            const checkboxes = document.querySelectorAll('.parent-phone:not(:disabled)');
+            checkboxes.forEach(cb => {
+                cb.checked = globalCheck.checked;
+            });
+        }
+
+        // SMS 발송
+        async function sendSMS() {
+            const message = document.getElementById('message-content').value.trim();
+            if (!message) {
+                alert('문자 내용을 입력해주세요.');
+                return;
+            }
+
+            const recipients = [];
+            document.querySelectorAll('.student-phone:checked, .parent-phone:checked').forEach(checkbox => {
+                if (checkbox.value && checkbox.value !== '-') {
+                    recipients.push({
+                        phone: checkbox.value,
+                        name: checkbox.dataset.name,
+                        type: checkbox.dataset.type
+                    });
+                }
+            });
+
+            if (recipients.length === 0) {
+                alert('수신자를 선택해주세요.');
+                return;
+            }
+
+            if (!confirm(`${recipients.length}명에게 문자를 발송하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/sms/api/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipients, message })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(`발송 완료!\n성공: ${result.successCount}건\n실패: ${result.failCount}건`);
+                    loadRecentHistory();
+                } else {
+                    alert('문자 발송에 실패했습니다: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 메모 저장
+        async function saveMemo() {
+            const memo = document.getElementById('memo-content').value;
+            
+            try {
+                const response = await fetch('/sms/api/save-memo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memo })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('메모가 저장되었습니다.');
+                } else {
+                    alert('메모 저장에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            }
+        }
+
+        // 최근 발송 내역 불러오기
+        async function loadRecentHistory() {
+            // 히스토리 페이지에서 데이터를 가져오는 로직 구현
+            // 실제로는 별도 API 엔드포인트가 필요
+        }
+
+        // 페이지 로드 시 최근 내역 불러오기
+        window.onload = function() {
+            loadRecentHistory();
+        };
+    </script>
+</body>
+</html>

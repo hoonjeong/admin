@@ -1,0 +1,262 @@
+/* Common styles for Eden Language Academy Admin System */
+
+/* Base styles */
+body {
+    background: #f8f9fa;
+}
+
+/* Navigation */
+.navbar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: white !important;
+}
+
+.navbar-nav .nav-link:hover {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+/* Main container */
+.main-container {
+    padding: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Cards */
+.card, .table-container, .write-card, .post-container {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* Page titles */
+.page-title, .section-title {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #667eea;
+}
+
+/* Category badges */
+.category-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.category-N { background: #ffeaa7; color: #d63031; }
+.category-S { background: #74b9ff; color: #0984e3; }
+.category-C { background: #a29bfe; color: #6c5ce7; }
+.category-D { background: #81ecec; color: #00b894; }
+.category-R { background: #fab1a0; color: #e17055; }
+
+/* Buttons */
+.btn {
+    padding: 10px 25px;
+    border-radius: 5px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    font-size: 15px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.required {
+    color: #dc3545;
+    margin-left: 3px;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    font-size: 14px;
+}
+
+tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Comment count */
+.comment-count {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+/* Empty states */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.empty-state-text {
+    font-size: 18px;
+}
+
+/* File upload areas */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f8f9fa;
+}
+
+.file-upload-area:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+}
+
+.file-upload-area.dragover {
+    border-color: #667eea;
+    background: #e8ecff;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    gap: 5px;
+}
+
+.pagination a, .pagination span {
+    padding: 8px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 3px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.pagination a:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.pagination .current {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .main-container {
+        padding: 15px;
+    }
+    
+    .card, .table-container, .write-card, .post-container {
+        padding: 20px;
+    }
+    
+    th, td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .btn {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+}

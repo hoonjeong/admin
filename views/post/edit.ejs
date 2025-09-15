@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글 수정 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <!-- CKEditor 5 CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <style>
+        .main-container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .edit-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .category-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .category-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .category-item input[type="radio"] {
+            cursor: pointer;
+        }
+        .category-item label {
+            cursor: pointer;
+            font-weight: 500;
+            color: #555;
+        }
+        .category-item input[type="radio"]:checked + label {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .editor-container {
+            min-height: 400px;
+            margin-bottom: 25px;
+        }
+        .ck-editor__editable {
+            min-height: 400px;
+        }
+        .existing-files {
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .existing-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .existing-file-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-delete-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #dc3545;
+            font-size: 14px;
+        }
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: #e8ecff;
+        }
+        .file-list {
+            margin-top: 15px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+        .file-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-remove {
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .file-remove:hover {
+            background: rgba(220, 53, 69, 0.1);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .required {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        .files-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="main-container">
+        <div class="edit-card">
+            <h2 class="section-title">글 수정</h2>
+            
+            <form id="editForm">
+                <!-- 카테고리 선택 -->
+                <div class="form-group">
+                    <label class="form-label">카테고리 <span class="required">*</span></label>
+                    <div class="category-group">
+                        <% Object.entries(categories).forEach(([key, value]) => { %>
+                            <div class="category-item">
+                                <input type="radio" id="category_<%= key %>" name="category" value="<%= key %>" <%= post.category === key ? 'checked' : '' %> required>
+                                <label for="category_<%= key %>"><%= value %></label>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- 제목 -->
+                <div class="form-group">
+                    <label for="subject" class="form-label">제목 <span class="required">*</span></label>
+                    <input type="text" id="subject" name="subject" class="form-control" required value="<%= post.subject %>" placeholder="제목을 입력하세요">
+                </div>
+                
+                <!-- 에디터 -->
+                <div class="form-group">
+                    <label class="form-label">내용 <span class="required">*</span></label>
+                    <div class="editor-container">
+                        <textarea id="editor" name="contents"><%= post.contents %></textarea>
+                    </div>
+                </div>
+                
+                <!-- 키워드 -->
+                <div class="form-group">
+                    <label for="meta_keyword" class="form-label">키워드</label>
+                    <input type="text" id="meta_keyword" name="meta_keyword" class="form-control" value="<%= post.meta_keyword || '' %>" placeholder="검색 키워드를 입력하세요 (쉼표로 구분)">
+                </div>
+                
+                <!-- 간단요약 -->
+                <div class="form-group">
+                    <label for="meta_description" class="form-label">간단요약</label>
+                    <input type="text" id="meta_description" name="meta_description" class="form-control" value="<%= post.meta_description || '' %>" placeholder="게시글 요약을 입력하세요">
+                </div>
+                
+                <!-- 기존 파일 -->
+                <% if (files && files.length > 0) { %>
+                    <div class="form-group">
+                        <label class="form-label">기존 첨부파일</label>
+                        <div class="files-subtitle">삭제할 파일을 선택하세요</div>
+                        <div class="existing-files">
+                            <% files.forEach(function(file) { %>
+                                <div class="existing-file-item">
+                                    <div class="existing-file-name">
+                                        <i class="bi bi-file-earmark"></i>
+                                        <span><%= file.filename %></span>
+                                    </div>
+                                    <div class="file-delete-checkbox">
+                                        <input type="checkbox" name="deleteFiles" value="<%= file.id %>" id="delete_<%= file.id %>">
+                                        <label for="delete_<%= file.id %>">삭제</label>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+                
+                <!-- 새 파일 추가 -->
+                <div class="form-group">
+                    <label class="form-label">새 파일 추가</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="bi bi-cloud-upload" style="font-size: 48px; color: #999;"></i>
+                        <p style="margin: 10px 0; color: #666;">클릭하거나 파일을 드래그하여 업로드</p>
+                        <p style="font-size: 14px; color: #999;">최대 10개 파일, 각 50MB 이하</p>
+                        <input type="file" id="fileInput" multiple style="display: none;" accept="*">
+                    </div>
+                    <div class="file-list" id="fileList"></div>
+                </div>
+                
+                <!-- 버튼 -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> 수정 완료
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        <i class="bi bi-x-circle"></i> 취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let editor;
+        let selectedFiles = [];
+        const postId = <%= post.id %>;
+        
+        // CKEditor 초기화
+        ClassicEditor
+            .create(document.querySelector('#editor'), {
+                language: 'ko',
+                toolbar: [
+                    'heading', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', '|',
+                    'link', 'bulletedList', 'numberedList', '|',
+                    'outdent', 'indent', '|',
+                    'blockQuote', 'insertTable', '|',
+                    'undo', 'redo'
+                ],
+                height: 400
+            })
+            .then(newEditor => {
+                editor = newEditor;
+            })
+            .catch(error => {
+                console.error('Editor initialization failed:', error);
+            });
+        
+        // 파일 업로드 영역 클릭
+        $('#fileUploadArea').click(function() {
+            $('#fileInput').click();
+        });
+        
+        // 파일 선택
+        $('#fileInput').change(function(e) {
+            handleFiles(e.target.files);
+        });
+        
+        // 드래그 앤 드롭
+        $('#fileUploadArea').on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass('dragover');
+        });
+        
+        $('#fileUploadArea').on('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+        });
+        
+        $('#fileUploadArea').on('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+            
+            const files = e.originalEvent.dataTransfer.files;
+            handleFiles(files);
+        });
+        
+        // 이미 업로드된 파일 목록 저장
+        let uploadedFiles = [];
+        
+        // 페이지 로드 시 기존 파일 목록 가져오기
+        async function loadUploadedFiles() {
+            try {
+                const response = await fetch('/post/api/files');
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedFiles = data.files || [];
+                }
+            } catch (error) {
+                // 파일 목록 로드 실패
+            }
+        }
+        
+        // 페이지 로드 시 실행
+        loadUploadedFiles();
+        
+        // 파일 처리
+        function handleFiles(files) {
+            const maxFiles = 10;
+            const maxSize = 50 * 1024 * 1024; // 50MB
+            
+            for (let i = 0; i < files.length; i++) {
+                if (selectedFiles.length >= maxFiles) {
+                    alert(`최대 ${maxFiles}개의 파일만 업로드할 수 있습니다.`);
+                    break;
+                }
+                
+                if (files[i].size > maxSize) {
+                    alert(`${files[i].name}: 파일 크기가 50MB를 초과합니다.`);
+                    continue;
+                }
+                
+                // 중복 파일명 체크
+                const isDuplicate = uploadedFiles.some(uploadedFile => 
+                    uploadedFile.toLowerCase() === files[i].name.toLowerCase()
+                );
+                
+                if (isDuplicate) {
+                    if (!confirm(`"${files[i].name}" 파일이 이미 존재합니다. 계속 진행하시겠습니까?`)) {
+                        continue;
+                    }
+                }
+                
+                selectedFiles.push(files[i]);
+            }
+            
+            updateFileList();
+        }
+        
+        // 파일 목록 업데이트
+        function updateFileList() {
+            const fileList = $('#fileList');
+            fileList.empty();
+            
+            selectedFiles.forEach((file, index) => {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                const fileItem = $(`
+                    <div class="file-item">
+                        <div class="file-name">
+                            <i class="bi bi-file-earmark"></i>
+                            <span>${file.name} (${fileSize}MB)</span>
+                        </div>
+                        <span class="file-remove" data-index="${index}">
+                            <i class="bi bi-x-lg"></i> 삭제
+                        </span>
+                    </div>
+                `);
+                fileList.append(fileItem);
+            });
+            
+            // 파일 삭제 이벤트
+            $('.file-remove').click(function() {
+                const index = $(this).data('index');
+                selectedFiles.splice(index, 1);
+                updateFileList();
+            });
+        }
+        
+        // 폼 제출
+        $('#editForm').submit(function(e) {
+            e.preventDefault();
+            
+            if (!$('input[name="category"]:checked').val()) {
+                alert('카테고리를 선택해주세요.');
+                return;
+            }
+            
+            const subject = $('#subject').val().trim();
+            if (!subject) {
+                alert('제목을 입력해주세요.');
+                return;
+            }
+            
+            const contents = editor.getData();
+            if (!contents) {
+                alert('내용을 입력해주세요.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('category', $('input[name="category"]:checked').val());
+            formData.append('subject', subject);
+            formData.append('contents', contents);
+            formData.append('meta_keyword', $('#meta_keyword').val());
+            formData.append('meta_description', $('#meta_description').val());
+            
+            // 삭제할 파일 ID 추가
+            $('input[name="deleteFiles"]:checked').each(function() {
+                formData.append('deleteFiles', $(this).val());
+            });
+            
+            // 새 파일 추가
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            $.ajax({
+                url: '/post/edit/' + postId,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert('게시글이 수정되었습니다.');
+                        // 파일 첨부 영역으로 포커스 이동 후 상세 페이지로 이동
+                        $('#fileInput').focus();
+                        $('#fileUploadArea')[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            window.location.href = '/post/view/' + postId;
+                        }, 500);
+                    } else {
+                        alert(response.message || '게시글 수정에 실패했습니다.');
+                    }
+                },
+                error: function() {
+                    alert('서버 오류가 발생했습니다.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수강반 수정 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .search-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        
+        .search-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .table-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        /* 모달 스타일 */
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        
+        .time-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .time-group select {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+    
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">수강반 관리</h2>
+            <a href="/class/add" class="btn btn-primary">수강반 추가</a>
+        </div>
+        
+        <div class="search-section">
+            <form class="search-form" method="GET" action="/class/edit">
+                <div class="search-group">
+                    <label class="search-label">수강반명 검색</label>
+                    <input type="text" class="form-control" name="search" placeholder="수강반명 입력" value="<%= search %>">
+                </div>
+                
+                <div class="search-group">
+                    <label class="search-label">선생님</label>
+                    <select class="form-select" name="teacher">
+                        <option value="">전체</option>
+                        <% if (teachers) { %>
+                            <% teachers.forEach(function(teacher) { %>
+                            <option value="<%= teacher.name %>" <%= selectedTeacher === teacher.name ? 'selected' : '' %>><%= teacher.name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="search-group">
+                    <label class="search-label">상태</label>
+                    <select class="form-select" name="status" id="statusFilter">
+                        <option value="active" <%= (!selectedStatus || selectedStatus === 'active') ? 'selected' : '' %>>진행중</option>
+                        <option value="all" <%= selectedStatus === 'all' ? 'selected' : '' %>>전체</option>
+                        <option value="inactive" <%= selectedStatus === 'inactive' ? 'selected' : '' %>>종료</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">검색</button>
+            </form>
+        </div>
+        
+        <div class="table-section">
+            <% if (classes && classes.length > 0) { %>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>수강반명</th>
+                            <th>학년</th>
+                            <th>요일/시간</th>
+                            <th>1교시</th>
+                            <th>2교시</th>
+                            <th>상태</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% classes.forEach(function(classItem) { %>
+                        <tr>
+                            <td><%= classItem.name %></td>
+                            <td>
+                                <% 
+                                // year 필드가 실제 학년을 나타냄
+                                let schoolLevel = '';
+                                let displayGrade = classItem.year;
+                                
+                                if (classItem.grade <= 6) {
+                                    schoolLevel = '초';
+                                } else if (classItem.grade <= 9) {
+                                    schoolLevel = '중';
+                                } else {
+                                    schoolLevel = '고';
+                                }
+                                %>
+                                <%= schoolLevel %><%= displayGrade %>
+                            </td>
+                            <td><%= classItem.day %>요일 <%= classItem.hour %>:<%= String(classItem.minute).padStart(2, '0') %></td>
+                            <td><%= classItem.teacherOne %></td>
+                            <td><%= classItem.teacherTwo || '-' %></td>
+                            <td>
+                                <span class="status-badge <%= classItem.liveStatus === 1 ? 'status-active' : 'status-inactive' %>">
+                                    <%= classItem.liveStatus === 1 ? '진행중' : '종료' %>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editClass(<%= classItem.id %>)">수정</button>
+                                    <button class="btn btn-sm btn-outline-<%= classItem.liveStatus === 1 ? 'danger' : 'success' %>" 
+                                            onclick="toggleStatus(<%= classItem.id %>, <%= classItem.liveStatus %>)">
+                                        <%= classItem.liveStatus === 1 ? '종료' : '시작' %>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <p>검색 결과가 없습니다.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- 수정 모달 -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">수강반 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editClassId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">수강반명</label>
+                            <input type="text" class="form-control" id="editName" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">학년</label>
+                            <select class="form-select" id="editGrade" required>
+                                <% for(let i = 1; i <= 6; i++) { %>
+                                <option value="<%= i %>"><%= i %>학년</option>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">연도</label>
+                            <input type="number" class="form-control" id="editYear" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">요일</label>
+                            <select class="form-select" id="editDay" required>
+                                <% const days = ['월', '화', '수', '목', '금', '토', '일']; %>
+                                <% days.forEach(function(day) { %>
+                                <option value="<%= day %>"><%= day %>요일</option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">수업시간</label>
+                            <div class="time-group">
+                                <select class="form-select" id="editHour" required>
+                                    <% for(let h = 0; h < 24; h++) { %>
+                                    <option value="<%= h %>"><%= h %>시</option>
+                                    <% } %>
+                                </select>
+                                <span>:</span>
+                                <select class="form-select" id="editMinute" required>
+                                    <option value="0">00분</option>
+                                    <option value="15">15분</option>
+                                    <option value="30">30분</option>
+                                    <option value="45">45분</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">1교시 선생님</label>
+                            <select class="form-select" id="editTeacherOne" required>
+                                <option value="">선택하세요</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">2교시 선생님</label>
+                            <select class="form-select" id="editTeacherTwo">
+                                <option value="">선택하세요</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        
+        // 페이지 로드 시 상태 필터 변경 이벤트 등록
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = document.getElementById('statusFilter');
+            const searchForm = document.querySelector('.search-form');
+            
+            // 상태 필터 변경 시 자동으로 폼 제출
+            statusFilter.addEventListener('change', function() {
+                searchForm.submit();
+            });
+        });
+        
+        async function editClass(classId) {
+            try {
+                const response = await fetch(`/class/${classId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const classInfo = result.classInfo;
+                    const teachers = result.teachers;
+                    
+                    // 폼 필드 채우기
+                    document.getElementById('editClassId').value = classInfo.id;
+                    document.getElementById('editName').value = classInfo.name;
+                    document.getElementById('editGrade').value = classInfo.grade;
+                    document.getElementById('editYear').value = classInfo.year;
+                    document.getElementById('editDay').value = classInfo.day;
+                    document.getElementById('editHour').value = classInfo.hour;
+                    document.getElementById('editMinute').value = classInfo.minute;
+                    
+                    // 선생님 드롭다운 채우기
+                    const teacherOneSelect = document.getElementById('editTeacherOne');
+                    const teacherTwoSelect = document.getElementById('editTeacherTwo');
+                    
+                    teacherOneSelect.innerHTML = '<option value="">선택하세요</option>';
+                    teacherTwoSelect.innerHTML = '<option value="">선택하세요</option>';
+                    
+                    teachers.forEach(teacher => {
+                        teacherOneSelect.innerHTML += `<option value="${teacher.name}">${teacher.name}</option>`;
+                        teacherTwoSelect.innerHTML += `<option value="${teacher.name}">${teacher.name}</option>`;
+                    });
+                    
+                    teacherOneSelect.value = classInfo.teacherOne;
+                    teacherTwoSelect.value = classInfo.teacherTwo || '';
+                    
+                    editModal.show();
+                } else {
+                    alert('수강반 정보를 불러올 수 없습니다: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        async function saveEdit() {
+            const classId = document.getElementById('editClassId').value;
+            const data = {
+                name: document.getElementById('editName').value,
+                grade: document.getElementById('editGrade').value,
+                year: document.getElementById('editYear').value,
+                day: document.getElementById('editDay').value,
+                hour: document.getElementById('editHour').value,
+                minute: document.getElementById('editMinute').value,
+                teacherOne: document.getElementById('editTeacherOne').value,
+                teacherTwo: document.getElementById('editTeacherTwo').value
+            };
+            
+            try {
+                const response = await fetch(`/class/${classId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    editModal.hide();
+                    location.reload();
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+        
+        async function toggleStatus(classId, currentStatus) {
+            const action = currentStatus === 1 ? '종료' : '시작';
+            
+            if (!confirm(`이 수강반을 ${action}하시겠습니까?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/class/${classId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                alert('오류가 발생했습니다: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
