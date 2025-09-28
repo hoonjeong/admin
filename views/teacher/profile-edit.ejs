@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <%- include('../partials/styles') %>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/navbar') %>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">내정보 수정</h1>
+                    <a href="/teacher/profile" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> 돌아가기
+                    </a>
+                </div>
+
+                <% if (success) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">개인정보 수정</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="/teacher/profile/edit" id="profileForm">
+                                    <div class="row mb-3">
+                                        <label for="name" class="col-sm-3 col-form-label">이름</label>
+                                        <div class="col-sm-9">
+                                            <input type="text" class="form-control" id="name" value="<%= teacher.name %>" readonly>
+                                            <div class="form-text">이름은 변경할 수 없습니다.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <label for="email" class="col-sm-3 col-form-label">이메일 *</label>
+                                        <div class="col-sm-9">
+                                            <input type="email" class="form-control" id="email" name="email" value="<%= teacher.email %>" required>
+                                            <div class="form-text">로그인 시 사용하는 이메일입니다.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <label for="phone" class="col-sm-3 col-form-label">전화번호 *</label>
+                                        <div class="col-sm-9">
+                                            <input type="tel" class="form-control" id="phone" name="phone" value="<%= teacher.phone || '' %>" required>
+                                            <div class="form-text">연락 가능한 전화번호를 입력해주세요.</div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <h6 class="mb-3">비밀번호 변경 (선택사항)</h6>
+                                    <div class="form-text mb-3">비밀번호를 변경하지 않으려면 아래 필드를 비워두세요.</div>
+
+                                    <div class="row mb-3">
+                                        <label for="currentPassword" class="col-sm-3 col-form-label">현재 비밀번호</label>
+                                        <div class="col-sm-9">
+                                            <input type="password" class="form-control" id="currentPassword" name="currentPassword" autocomplete="current-password">
+                                            <div class="form-text">비밀번호 변경 시에만 입력해주세요.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <label for="newPassword" class="col-sm-3 col-form-label">새 비밀번호</label>
+                                        <div class="col-sm-9">
+                                            <input type="password" class="form-control" id="newPassword" name="newPassword" autocomplete="new-password">
+                                            <div class="form-text">6자리 이상 입력해주세요.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <label for="confirmPassword" class="col-sm-3 col-form-label">새 비밀번호 확인</label>
+                                        <div class="col-sm-9">
+                                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" autocomplete="new-password">
+                                            <div class="form-text">새 비밀번호를 다시 입력해주세요.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <a href="/teacher/profile" class="btn btn-secondary me-md-2">취소</a>
+                                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                                            <i class="bi bi-check-lg"></i> 저장
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">수정 안내</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle"></i> 수정 시 주의사항</h6>
+                                    <ul class="mb-0">
+                                        <li>이메일은 중복될 수 없습니다</li>
+                                        <li>전화번호는 필수 항목입니다</li>
+                                        <li>비밀번호는 6자리 이상이어야 합니다</li>
+                                        <li>정보 변경 후 세션이 업데이트됩니다</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">계정 정보</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>계정 ID:</strong> <%= teacher.id %></p>
+                                <p><strong>권한:</strong>
+                                    <% if (adminUser.code === 'O') { %>
+                                        <span class="badge bg-success">관리자</span>
+                                    <% } else if (adminUser.code === 'T') { %>
+                                        <span class="badge bg-primary">선생님</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">일반</span>
+                                    <% } %>
+                                </p>
+                                <small class="text-muted">계정 ID와 권한은 변경할 수 없습니다.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('profileForm');
+            const newPassword = document.getElementById('newPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const currentPassword = document.getElementById('currentPassword');
+
+            // 비밀번호 변경 시 현재 비밀번호 필수 체크
+            newPassword.addEventListener('input', function() {
+                if (this.value) {
+                    currentPassword.required = true;
+                    confirmPassword.required = true;
+                } else {
+                    currentPassword.required = false;
+                    confirmPassword.required = false;
+                }
+            });
+
+            // 비밀번호 확인 일치 체크
+            confirmPassword.addEventListener('input', function() {
+                if (newPassword.value !== this.value) {
+                    this.setCustomValidity('비밀번호가 일치하지 않습니다.');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+
+            // 폼 제출 시 추가 검증
+            form.addEventListener('submit', function(e) {
+                const newPwd = newPassword.value;
+                const confirmPwd = confirmPassword.value;
+                const currentPwd = currentPassword.value;
+
+                if (newPwd && !currentPwd) {
+                    e.preventDefault();
+                    alert('새 비밀번호를 설정하려면 현재 비밀번호를 입력해주세요.');
+                    currentPassword.focus();
+                    return;
+                }
+
+                if (newPwd && newPwd !== confirmPwd) {
+                    e.preventDefault();
+                    alert('새 비밀번호가 일치하지 않습니다.');
+                    confirmPassword.focus();
+                    return;
+                }
+
+                if (newPwd && newPwd.length < 6) {
+                    e.preventDefault();
+                    alert('비밀번호는 6자리 이상이어야 합니다.');
+                    newPassword.focus();
+                    return;
+                }
+
+                // 제출 버튼 비활성화 (중복 제출 방지)
+                document.getElementById('submitBtn').disabled = true;
+            });
+
+            // 전화번호 포맷팅
+            const phoneInput = document.getElementById('phone');
+            phoneInput.addEventListener('input', function() {
+                let value = this.value.replace(/[^0-9]/g, '');
+                if (value.length >= 3 && value.length <= 7) {
+                    value = value.replace(/(\d{3})(\d{1,4})/, '$1-$2');
+                } else if (value.length >= 8) {
+                    value = value.replace(/(\d{3})(\d{4})(\d{1,4})/, '$1-$2-$3');
+                }
+                this.value = value;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -5,55 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>이든배움국어학원</title>
     <link rel="stylesheet" href="/css/home.css">
+    <%- include('../partials/header-styles') %>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: white;
             color: #333;
             overflow-x: hidden;
-        }
-
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .nav {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .nav-item {
-            margin: 0 20px;
-            text-decoration: none;
-            color: black;
-            font-size: 16px;
-            font-weight: 400;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-item.active {
-            font-weight: bold;
-        }
-
-        .nav-item:hover {
-            color: #007bff;
         }
 
         .section {
@@ -213,8 +174,33 @@
 
         .animate {
             opacity: 1 !important;
-            transform: translateY(0) !important;
+            transform: translateY(0) translateX(0) scale(1) !important;
         }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .scroll-reveal.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stagger-animation {
+            transition-delay: 0s;
+        }
+
+        .stagger-animation:nth-child(1) { transition-delay: 0.1s; }
+        .stagger-animation:nth-child(2) { transition-delay: 0.2s; }
+        .stagger-animation:nth-child(3) { transition-delay: 0.3s; }
+        .stagger-animation:nth-child(4) { transition-delay: 0.4s; }
+        .stagger-animation:nth-child(5) { transition-delay: 0.5s; }
+        .stagger-animation:nth-child(6) { transition-delay: 0.6s; }
+        .stagger-animation:nth-child(7) { transition-delay: 0.7s; }
+        .stagger-animation:nth-child(8) { transition-delay: 0.8s; }
+        .stagger-animation:nth-child(9) { transition-delay: 0.9s; }
 
         @keyframes fadeInUp {
             to {
@@ -235,6 +221,197 @@
             }
         }
 
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .section-title h2 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .section-description {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .teachers-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            max-width: 1200px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .teacher-card {
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.6s ease-out;
+        }
+
+        .teacher-image {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/4;
+            overflow: hidden;
+        }
+
+        .teacher-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+            image-rendering: optimizeSpeed;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+        .teacher-card:hover .teacher-image img {
+            transform: scale(1.05);
+        }
+
+        .teacher-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 30px 20px 20px;
+            text-align: center;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .school-name {
+            font-weight: bold;
+        }
+
+        .school-name-large {
+            font-size: 1.87rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .teacher-name {
+            font-size: 1.4rem;
+            font-weight: normal;
+            color: white;
+        }
+
+        .greeting-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 60px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+
+        .greeting-image {
+            flex: 1.3;
+            max-width: 650px;
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.8s ease-out 0.2s;
+        }
+
+        .greeting-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .greeting-content {
+            flex: 1;
+            max-width: 550px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.8s ease-out 0.4s;
+        }
+
+        .greeting-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .greeting-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 40px;
+        }
+
+        .greeting-philosophy {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 40px;
+            border-left: 4px solid #007bff;
+        }
+
+        .greeting-philosophy h3 {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .greeting-philosophy p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #555;
+            margin: 0;
+        }
+
+        .system-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .system-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .system-link:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+
         @media (max-width: 768px) {
             .nav {
                 flex-wrap: wrap;
@@ -252,6 +429,38 @@
 
             .section-text {
                 font-size: 1.8rem;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+
+            .section-description {
+                font-size: 1.2rem;
+                padding: 0 20px;
+            }
+
+            .teachers-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 0 20px;
+            }
+
+
+            .teacher-label {
+                font-size: 1.2rem;
+                padding: 20px;
+            }
+
+            .school-name-large {
+                font-size: 1.33rem;
+                margin-bottom: 6px;
+            }
+
+            .teacher-name {
+                font-size: 1.2rem;
+                font-weight: normal;
+                color: white;
             }
 
             .teachers-container {
@@ -294,30 +503,45 @@
             .chalkboard-text {
                 font-size: 1.8rem;
             }
+
+            .greeting-section {
+                flex-direction: column;
+                padding: 60px 20px;
+                gap: 40px;
+            }
+
+            .greeting-image {
+                max-width: 100%;
+            }
+
+            .greeting-content {
+                max-width: 100%;
+            }
+
+            .greeting-title {
+                font-size: 1.5rem;
+            }
+
+            .greeting-text {
+                font-size: 1rem;
+            }
+
+            .greeting-philosophy {
+                padding: 20px;
+            }
+
+            .greeting-philosophy h3 {
+                font-size: 1.1rem;
+            }
+
+            .greeting-philosophy p {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <nav class="nav">
-            <a href="#intro" class="nav-item active">이든국어소개</a>
-            <a href="#" class="nav-item" data-target="high-school">고등부</a>
-            <a href="#" class="nav-item" data-target="middle-school">중등부</a>
-            <a href="#" class="nav-item" data-target="reading">독서교육원</a>
-            <a href="#" class="nav-item">게시판</a>
-            <a href="#" class="nav-item">동영상강의</a>
-            <a href="#" class="nav-item">상담예약</a>
-            <a href="#" class="nav-item">수강후기</a>
-            <a href="#" class="nav-item">교습비</a>
-            <a href="/admin-login" class="nav-item">관리자</a>
-            <% if (typeof userInfo !== 'undefined' && userInfo) { %>
-                <a href="#" class="nav-item" onclick="logout()">내정보 (로그아웃)</a>
-            <% } else { %>
-                <a href="/user/login" class="nav-item">로그인</a>
-                <a href="/user/register" class="nav-item">회원가입</a>
-            <% } %>
-        </nav>
-    </header>
+    <%- include('../partials/header') %>
 
     <section id="intro" class="section intro-section">
         <div>
@@ -329,140 +553,314 @@
         </div>
     </section>
 
+    <!-- 인사말 섹션 -->
+    <section class="section">
+        <div class="greeting-section">
+            <div class="greeting-image">
+                <img src="/image/서효정 대표원장.jpg" alt="서효정 대표원장" loading="lazy">
+            </div>
+            <div class="greeting-content">
+                <h2 class="greeting-title">대표원장 인사말</h2>
+                <div class="greeting-text">
+                    안녕하세요. 이든배움국어학원 서효정 대표원장입니다.<br>
+                    이든은 순우리말로, '참된, 어진' 이란 의미를 담고 있습니다.<br>
+                    상동 지역 학생들에게 참되고 선하게, 올바른 방법으로 국어를 가르치겠다는 일념으로 학원을 개원한지 어느덧 15년이라는 시간이 흘렀습니다.
+                </div>
+                <div class="greeting-philosophy">
+                    <h3>이든배움국어학원은<br>'본질에 충실한 가르침'을<br>교육철학으로 정하고,</h3>
+                    <p>교육철학이 담긴 시스템을 만들기 위해<br>끊임없이 연구합니다.</p>
+                </div>
+                <div class="greeting-text">
+                    초중고 환경에 맞는<br>
+                    국어 학습 시스템을 통해<br>
+                    상동지역 학생들의 국어 역량강화를 위해<br>
+                    더욱 노력하겠습니다.
+                </div>
+                <div class="system-links">
+                    <a href="#" class="system-link" data-target="reading">독서교육원 시스템 보기</a>
+                    <a href="#" class="system-link" data-target="middle-school">중등부 시스템 보기</a>
+                    <a href="#" class="system-link" data-target="high-school">고등부 시스템 보기</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 고등부 섹션 -->
+    <section id="high-school" class="section content-section">
+        <div class="section-title">
+            <h2>이든국어 고등부</h2>
+            <h3 style="font-size: 1.8rem; font-weight: bold; color: #007bff; margin-bottom: 20px;">‘성과를 내기 위한 시스템’</h3>
+            <p class="section-description">
+                고등부에서 가장 중요한 것은 ‘성과’입니다.<br>
+                최고의 국어 전문가들이<br>
+                학생들에게 집중할 수 있는 환경을 제공하기 위해,<br>
+                학교별 전문가를 배정하고,<br>
+                수년간 해당 학교에만 집중하는 환경을 제공하여,<br>
+                수업과 클리닉, 자료에서 학교별 전문성을 더욱 강화하였습니다.
+            </p>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/김보름 선생님.jpg" alt="김보름 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">상원고</span>
+                        <span class="teacher-name">김보름 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/이창완 선생님.jpg" alt="이창완 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">상동고</span>
+                        <span class="teacher-name">이창완 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/이우용 선생님.jpg" alt="이우용 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">송내고</span>
+                        <span class="teacher-name">이우용 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/박옥선 선생님.jpg" alt="박옥선 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">부명고</span>
+                        <span class="teacher-name">박옥선 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/박정영 선생님.jpg" alt="박정영 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">정명, 부천여고</span>
+                        <span class="teacher-name">박정영 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/권지영 선생님.jpg" alt="권지영 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">상일고</span>
+                        <span class="teacher-name">권지영 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/김소솜 선생님.jpg" alt="김소솜 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">중원, 중흥고</span>
+                        <span class="teacher-name">김소솜 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/백슬기 선생님.jpg" alt="백슬기 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">소명여고</span>
+                        <span class="teacher-name">백슬기 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/라영서 선생님.jpg" alt="라영서 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">수능국어</span>
+                        <span class="teacher-name">라영서 선생님</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 중등부 섹션 -->
+    <section id="middle-school" class="section content-section">
+        <div class="section-title">
+            <h2>이든국어 중등부</h2>
+            <h3 style="font-size: 1.8rem; font-weight: bold; color: #007bff; margin-bottom: 20px;">'교과국어와 심화독서의 조화'</h3>
+            <p class="section-description">
+                고등국어 준비와 내신대비수업에 최적화된<br>
+                교과국어학습 프로그램과<br>
+                학생들의 사고력과 문해력, 글쓰기 역량을 더욱 강화시켜주는<br>
+                심화독서 프로그램으로,<br>
+                중등국어에 최적화된 환경을 제공합니다.
+            </p>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/김태경 선생님.jpg" alt="김태경 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">상일중, 고입담당</span>
+                        <span class="teacher-name">김태경 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/심미숙 선생님.jpg" alt="심미숙 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">석천중, 고입담당</span>
+                        <span class="teacher-name">심미숙 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/박서연 선생님.jpg" alt="박서연 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">중등 종합반</span>
+                        <span class="teacher-name">박서연 선생님</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 독서교육원 섹션 -->
+    <section id="reading" class="section content-section">
+        <div class="section-title">
+            <h2>이든국어 독서교육원</h2>
+            <h3 style="font-size: 1.8rem; font-weight: bold; color: #007bff; margin-bottom: 20px;">‘국어로 바로잡는 독서, 독서로 완성하는 국어’</h3>
+            <p class="section-description">
+                책만 열심히 읽어서는<br>
+                제대로 된 학습역량을 키우기 어렵습니다.<br>
+                독서의 방법을 일깨워주는 국어 훈련과,<br>
+                깊이 있는 독서를 통해 학습을 완성하는 프로그램으로<br>
+                국어+독서의 역량을 동시에 강화하는<br>
+                이든국어만의 독서교육 프로그램입니다.
+            </p>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/서미정 선생님.jpg" alt="서미정 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">독서교육원</span>
+                        <span class="teacher-name">서미정 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/강지하 선생님.jpg" alt="강지하 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">독서교육원</span>
+                        <span class="teacher-name">강지하 선생님</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/민지연 선생님.jpg" alt="민지연 선생님" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">독서교육원</span>
+                        <span class="teacher-name">민지연 선생님</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 연구진 섹션 -->
     <section class="section content-section">
-        <div class="section-image" data-has-chalkboard="true">
-            <img src="/image/1.png" alt="내신대비수업" style="max-width: 100%; height: auto; border-radius: 10px; margin: 0 auto; display: block;">
-            <div class="chalkboard-text">오직 너희 학교만을 위한<br>내신대비수업</div>
+        <div class="section-title">
+            <h2>이든국어 연구진</h2>
+            <h3 style="font-size: 1.8rem; font-weight: bold; color: #007bff; margin-bottom: 20px;">학생들의 목표실현을 위한 방법을 연구합니다.</h3>
+            <p class="section-description">
+                국어 자료, 수업 연구는 기본,<br>
+                학생들의 목표실현을 돕기 위한 입시 상담과,<br>
+                최고의 학습환경을 제공하기 위한 기술 개발을 까지,<br>
+                이든국어 연구진은 오늘도 연구에 매진합니다.
+            </p>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/서효정 대표원장.jpg" alt="서효정 대표원장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">대표원장</span>
+                        <span class="teacher-name">서효정</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/정훈 부원장.jpg" alt="정훈 부원장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">부원장</span>
+                        <span class="teacher-name">정훈</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/김진옥 상담실장.jpg" alt="김진옥 상담실장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">상담실장</span>
+                        <span class="teacher-name">김진옥</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 운영진 섹션 -->
+    <section class="section content-section">
+        <div class="section-title">
+            <h2>이든국어 운영진</h2>
+            <h3 style="font-size: 1.8rem; font-weight: bold; color: #007bff; margin-bottom: 20px;">고객과의 신뢰를 최고의 가치로</h3>
+            <p class="section-description">
+                친절과 신뢰를 최고의 가치로 추구하며,<br>
+                이든의 학생들이 최고의 환경에서<br>
+                오직 학습에만 집중할 수 있도록,<br>
+                최선을 다하겠습니다.
+            </p>
+        </div>
+        <div class="teachers-grid">
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/장소연 운영실장.jpg" alt="장소연 운영실장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">운영실장</span>
+                        <span class="teacher-name">장소연</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/권나연 운영실장.jpg" alt="권나연 운영실장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">운영실장</span>
+                        <span class="teacher-name">권나연</span>
+                    </div>
+                </div>
+            </div>
+            <div class="teacher-card">
+                <div class="teacher-image">
+                    <img src="/image/박예지 홍보실장.jpg" alt="박예지 홍보실장" loading="lazy">
+                    <div class="teacher-label">
+                        <span class="school-name-large">홍보실장</span>
+                        <span class="teacher-name">박예지</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
     <section class="section content-section">
-        <div class="section-image">
-            <img src="/image/2.png" alt="1:1 밀착 클리닉" style="max-width: 100%; height: auto; border-radius: 10px; margin: 0 auto; display: block;">
-        </div>
-        <div class="section-text">
-            학교 선생님과 매주 진행하는<br>1:1 밀착 클리닉
-        </div>
-    </section>
-
-    <section class="section content-section">
-        <div class="section-text">
-            오직 이든국어에서만 만날 수 있는<br>학교별 전문 강사진과 함께<br>1등급에 도전해보세요
-        </div>
-    </section>
-
-    <section class="section teacher-row" id="high-school">
-        <div class="teacher-photo">
-            <img src="/image/김보름 선생님.jpg" alt="김보름 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">상원고 전임</div>
-            <div class="teacher-name">김보름 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row reverse">
-        <div class="teacher-photo">
-            <img src="/image/이창완 선생님.jpg" alt="이창완 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">상동고 전임</div>
-            <div class="teacher-name">이창완 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row">
-        <div class="teacher-photo">
-            <img src="/image/이우용 선생님.jpg" alt="이우용 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">송내고 전임</div>
-            <div class="teacher-name">이우용 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row reverse">
-        <div class="teacher-photo">
-            <img src="/image/박옥선 선생님.jpg" alt="박옥선 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">부명고 전임</div>
-            <div class="teacher-name">박옥선 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row">
-        <div class="teacher-photo">
-            <img src="/image/박정영 선생님.jpg" alt="박정영 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">정명, 부천여고 전임</div>
-            <div class="teacher-name">박정영 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row reverse">
-        <div class="teacher-photo">
-            <img src="/image/권지영 선생님.jpg" alt="권지영 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">상일고 전임</div>
-            <div class="teacher-name">권지영 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row">
-        <div class="teacher-photo">
-            <img src="/image/김소솜 선생님.jpg" alt="김소솜 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">중원, 중흥고 전임</div>
-            <div class="teacher-name">김소솜 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row reverse">
-        <div class="teacher-photo">
-            <img src="/image/백슬기 선생님.jpg" alt="백슬기 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">소명여고 전임</div>
-            <div class="teacher-name">백슬기 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row" id="middle-school">
-        <div class="teacher-photo">
-            <img src="/image/김태경 선생님.jpg" alt="김태경 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">상일중 전임</div>
-            <div class="teacher-name">김태경 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row reverse">
-        <div class="teacher-photo">
-            <img src="/image/심미숙 선생님.jpg" alt="심미숙 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">석천중 전임</div>
-            <div class="teacher-name">심미숙 선생님</div>
-        </div>
-    </section>
-
-    <section class="section teacher-row">
-        <div class="teacher-photo">
-            <img src="/image/박서연 선생님.jpg" alt="박서연 선생님">
-        </div>
-        <div class="teacher-info">
-            <div class="teacher-school">중등 종합반</div>
-            <div class="teacher-name">박서연 선생님</div>
-        </div>
-    </section>
-
-    <section class="section content-section">
-        <div class="section-image">
+        <div class="section-image scroll-reveal">
             <img src="/image/3.png" alt="마무리 이미지" style="max-width: 100%; height: auto; border-radius: 10px; margin: 0 auto; display: block;">
         </div>
     </section>
@@ -475,15 +873,40 @@
             });
         }
 
+        // 향상된 스크롤 애니메이션 시스템
         const observerOptions = {
-            threshold: 0.3,
-            rootMargin: '0px 0px -50px 0px'
+            threshold: 0.15,
+            rootMargin: '0px 0px -100px 0px'
         };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('animate');
+
+                    // 선생님 카드들의 지연 애니메이션
+                    if (entry.target.classList.contains('teachers-grid')) {
+                        const cards = entry.target.querySelectorAll('.teacher-card');
+                        cards.forEach((card, index) => {
+                            setTimeout(() => {
+                                card.classList.add('animate');
+                            }, index * 100);
+                        });
+                    }
+
+                    // 인사말 섹션의 개별 애니메이션
+                    if (entry.target.classList.contains('greeting-section')) {
+                        const image = entry.target.querySelector('.greeting-image');
+                        const content = entry.target.querySelector('.greeting-content');
+
+                        setTimeout(() => {
+                            if (image) image.classList.add('animate');
+                        }, 200);
+
+                        setTimeout(() => {
+                            if (content) content.classList.add('animate');
+                        }, 400);
+                    }
 
                     // 칠판 텍스트 애니메이션
                     if (entry.target.dataset.hasChalkboard) {
@@ -513,12 +936,56 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.section-image, .section-text, .teacher-row').forEach(el => {
+        // 애니메이션을 적용할 모든 요소들을 관찰
+        document.querySelectorAll('.section-image, .section-text, .teacher-row, .section-title, .teachers-grid, .greeting-section, .scroll-reveal').forEach(el => {
             observer.observe(el);
+        });
+
+        // 페이지 로드 시 초기 애니메이션 체크
+        window.addEventListener('load', () => {
+            // 이미 보이는 요소들에 대해 애니메이션 적용
+            const viewportHeight = window.innerHeight;
+            document.querySelectorAll('.section-title, .teachers-grid, .greeting-section, .scroll-reveal').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < viewportHeight * 0.8) {
+                    el.classList.add('animate');
+                }
+            });
+        });
+
+        // 시스템 링크 클릭 이벤트
+        document.querySelectorAll('.system-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = link.dataset.target;
+
+                if (target === 'high-school') {
+                    const highSchoolSection = document.getElementById('high-school');
+                    if (highSchoolSection) {
+                        highSchoolSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else if (target === 'middle-school') {
+                    const middleSchoolSection = document.getElementById('middle-school');
+                    if (middleSchoolSection) {
+                        middleSchoolSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else if (target === 'reading') {
+                    const readingSection = document.getElementById('reading');
+                    if (readingSection) {
+                        readingSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
         });
 
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
+                // 실제 링크가 있는 메뉴는 기본 동작을 허용
+                const href = item.getAttribute('href');
+                if (href && href !== '#' && !href.startsWith('#')) {
+                    return; // 기본 동작 허용 (페이지 이동)
+                }
+
                 e.preventDefault();
 
                 const target = item.dataset.target;
@@ -540,8 +1007,19 @@
                         item.classList.add('active');
                     }
                 } else if (target === 'reading') {
-                    // 독서교육원 준비중 알림
-                    alert('독서교육원은 준비중입니다.');
+                    // 독서교육원 섹션으로 스크롤
+                    const readingSection = document.getElementById('reading');
+                    if (readingSection) {
+                        readingSection.scrollIntoView({ behavior: 'smooth' });
+                        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                        item.classList.add('active');
+                    }
+                } else if (item.textContent.trim() === '상담예약') {
+                    alert('상담예약 기능은 준비중입니다.');
+                } else if (item.textContent.trim() === '수강후기') {
+                    alert('수강후기 기능은 준비중입니다.');
+                } else if (item.textContent.trim() === '교습비') {
+                    alert('교습비 안내 기능은 준비중입니다.');
                 } else if (item.getAttribute('href').startsWith('#')) {
                     const targetId = item.getAttribute('href').substring(1);
                     const targetElement = document.getElementById(targetId);
@@ -575,35 +1053,35 @@
                     } else if (section.id === 'middle-school') {
                         const middleSchoolNav = document.querySelector('.nav-item[data-target="middle-school"]');
                         if (middleSchoolNav) middleSchoolNav.classList.add('active');
+                    } else if (section.id === 'reading') {
+                        const readingNav = document.querySelector('.nav-item[data-target="reading"]');
+                        if (readingNav) readingNav.classList.add('active');
                     }
                 }
             });
         });
 
-        // 로그아웃 함수
-        async function logout() {
-            if (confirm('로그아웃하시겠습니까?')) {
-                try {
-                    const response = await fetch('/user/logout', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
+        // 드롭다운 메뉴 기능
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('userDropdown');
+            const dropdownMenu = document.getElementById('userDropdownMenu');
 
-                    const data = await response.json();
+            if (dropdown && dropdownMenu) {
+                dropdown.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    dropdownMenu.classList.toggle('show');
+                });
 
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('로그아웃 중 오류가 발생했습니다.');
+                // 외부 클릭 시 드롭다운 닫기
+                document.addEventListener('click', function(e) {
+                    if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
                     }
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('로그아웃 중 오류가 발생했습니다.');
-                }
+                });
             }
-        }
+        });
+
     </script>
+    <%- include('../partials/header-scripts') %>
 </body>
 </html>

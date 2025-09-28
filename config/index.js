@@ -1,11 +1,9 @@
 module.exports = {
-    // 서버 설정
     server: {
         port: process.env.PORT || 3000,
         env: process.env.NODE_ENV || 'development'
     },
     
-    // 데이터베이스 설정
     database: {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT || 3306,
@@ -17,7 +15,6 @@ module.exports = {
         queueLimit: 0
     },
     
-    // 세션 설정
     session: {
         secret: process.env.SESSION_SECRET || 'default-secret-key-for-development',
         resave: false,
@@ -30,7 +27,6 @@ module.exports = {
         }
     },
     
-    // 이메일 설정
     email: {
         user: process.env.EMAIL_USER,
         host: process.env.EMAIL_HOST,
@@ -39,28 +35,25 @@ module.exports = {
         secure: false
     },
     
-    // SMS 설정
     sms: {
         userId: process.env.SMS_USER_ID,
         authKey: process.env.SMS_AUTH_KEY,
-        callNum: process.env.SMS_CALL_NUMBER || '010-9363-6362',
+        callNum: process.env.SMS_CALL_NUMBER || undefined,
         mode: process.env.SMS_MODE || 'Test',
         apiUrl: process.env.SMS_API_URL || 'http://www.sms9.co.kr/authSendApi/authSendApi_UTF8.php'
     },
 
-    // 파일 업로드 설정
     upload: {
-        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFileSize: 50 * 1024 * 1024,
         maxFiles: 10,
         allowedTypes: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'gif', 'zip'],
         uploadDir: 'upload'
     },
     
-    // 보안 설정
     security: {
         bcryptRounds: 10,
         passwordMinLength: 8,
         loginAttempts: 5,
-        lockoutTime: 15 * 60 * 1000 // 15분
+        lockoutTime: 15 * 60 * 1000
     }
 };

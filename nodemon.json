@@ -1,0 +1,23 @@
+{
+  "watch": [
+    "routes/",
+    "views/",
+    "config/",
+    "middleware/",
+    "utils/",
+    "app.js"
+  ],
+  "ext": "js,ejs,json",
+  "ignore": [
+    "node_modules/",
+    "upload/",
+    "public/",
+    "*.log",
+    "*.tmp"
+  ],
+  "delay": 500,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "verbose": false
+}

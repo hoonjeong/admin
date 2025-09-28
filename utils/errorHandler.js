@@ -66,14 +66,45 @@ const handleValidationError = (res, errors) => {
 };
 
 /**
+ * 커스텀 에러 클래스
+ */
+class AppError extends Error {
+    constructor(message, statusCode = 500) {
+        super(message);
+        this.statusCode = statusCode;
+        this.isOperational = true;
+
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+/**
  * 전역 에러 핸들러 미들웨어
  */
 const globalErrorHandler = (err, req, res, next) => {
     logger.error('Global error handler:', err);
 
+    let statusCode = err.statusCode || 500;
+    let message = err.message || 'Internal server error';
+
+    // AppError인 경우 JSON 응답 또는 적절한 리다이렉트
+    if (err instanceof AppError) {
+        if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+            return res.status(statusCode).json({
+                success: false,
+                error: message
+            });
+        } else {
+            // 권한 에러인 경우 적절한 페이지로 리다이렉트
+            if (statusCode === 403) {
+                return res.redirect('/auth/login');
+            }
+        }
+    }
+
     const response = {
         success: false,
-        message: 'Internal server error'
+        message: statusCode === 500 ? 'Internal server error' : message
     };
 
     if (process.env.NODE_ENV === 'development') {
@@ -81,10 +112,11 @@ const globalErrorHandler = (err, req, res, next) => {
         response.stack = err.stack;
     }
 
-    res.status(500).json(response);
+    res.status(statusCode).json(response);
 };
 
 module.exports = {
+    AppError,
     handleControllerError,
     handleDatabaseError,
     handleValidationError,

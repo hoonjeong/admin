@@ -14,6 +14,11 @@ async function sendSMS(phone, message, callNum) {
     const { userId: sUserid, authKey, callNum: defaultCallNum, mode: sMode, apiUrl } = config.sms;
 
     if (!sUserid || !authKey) {
+        logger.warn('SMS 환경변수 미설정, 테스트 모드로 동작:', { sUserid: !!sUserid, authKey: !!authKey, sMode });
+        // 테스트 모드에서는 SMS 발송을 시뮬레이션
+        if (sMode === 'Test') {
+            return '테스트 모드: SMS 발송 시뮬레이션 성공';
+        }
         throw new Error('SMS_USER_ID 및 SMS_AUTH_KEY 환경변수가 설정되지 않았습니다.');
     }
 
@@ -82,15 +87,8 @@ async function sendSMS(phone, message, callNum) {
  */
 async function insertSmsSendResult(sendResult) {
     try {
-        logger.info('SMS 발송 결과 저장 시작:', {
-            phone: sendResult.phone,
-            messageLength: sendResult.message ? sendResult.message.length : 0,
-            type: sendResult.type,
-            resultMessage: sendResult.result_message
-        });
 
         const db = require('../config/database');
-        const connection = await db.getConnection();
 
         const query = `
             INSERT INTO sms_send_result_nine (phone, message, type, result_message, send_time)
@@ -103,20 +101,13 @@ async function insertSmsSendResult(sendResult) {
             ? resultMessage.substring(0, 997) + '...'
             : resultMessage;
 
-        logger.info('SMS DB 쿼리 실행 중:', {
-            query: query.replace(/\s+/g, ' ').trim(),
-            params: [sendResult.phone, sendResult.message?.substring(0, 50) + '...', sendResult.type, truncatedResultMessage?.substring(0, 50) + '...']
-        });
 
-        await connection.execute(query, [
+        await db.execute(query, [
             sendResult.phone,
             sendResult.message,
             sendResult.type,
             truncatedResultMessage
         ]);
-
-        connection.release();
-        logger.info('SMS 발송 결과 저장 완료:', sendResult.phone);
     } catch (error) {
         logger.error('SMS 발송 결과 저장 오류:', {
             error: error.message,
@@ -128,7 +119,7 @@ async function insertSmsSendResult(sendResult) {
                 type: sendResult.type
             }
         });
-        console.error('SMS 저장 오류 상세:', error);
+        logger.error('SMS 저장 오류 상세', error);
     }
 }
 
@@ -157,12 +148,68 @@ async function sendVerificationSMS(phone) {
         const result = await sendSMS(phone, message);
         return { success: true, verificationCode, result };
     } catch (error) {
+        logger.error('SMS 발송 실패 상세:', { phone, error: error.message, stack: error.stack });
         return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 인증번호를 데이터베이스에 저장
+ */
+async function saveVerificationCode(phone, code, type, expireMinutes) {
+    try {
+        const db = require('../config/database');
+
+        // 기존 인증번호 삭제
+        await db.execute(
+            'DELETE FROM verification_codes WHERE phone = ? AND type = ?',
+            [phone, type]
+        );
+
+        // 새 인증번호 저장
+        await db.execute(
+            'INSERT INTO verification_codes (phone, code, type, expires_at, created_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE), NOW())',
+            [phone, code, type, expireMinutes]
+        );
+
+    } catch (error) {
+        logger.error('인증번호 저장 오류', error);
+        throw error;
+    }
+}
+
+/**
+ * 인증번호 확인
+ */
+async function verifyCode(phone, code, type) {
+    try {
+        const db = require('../config/database');
+
+        const [rows] = await db.execute(
+            'SELECT * FROM verification_codes WHERE phone = ? AND code = ? AND type = ? AND expires_at > NOW()',
+            [phone, code, type]
+        );
+
+        if (rows.length > 0) {
+            // 인증 성공 시 해당 인증번호 삭제
+            await db.execute(
+                'DELETE FROM verification_codes WHERE phone = ? AND type = ?',
+                [phone, type]
+            );
+            return true;
+        }
+
+        return false;
+    } catch (error) {
+        logger.error('인증번호 확인 오류', error);
+        return false;
     }
 }
 
 module.exports = {
     sendSMS,
     sendVerificationSMS,
-    generateVerificationCode
+    generateVerificationCode,
+    saveVerificationCode,
+    verifyCode
 };

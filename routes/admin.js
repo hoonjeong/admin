@@ -1,14 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { isAuthenticated } = require('../middleware/auth');
+const { isAdminAuthenticated } = require('../middleware/adminAuth');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { getClassesWithStudentCount } = require('../utils/database');
 const db = require('../config/database');
 
-router.use(isAuthenticated);
+// Helper function to sort classes
+const sortClasses = (classes, sortBy) => {
+    if (sortBy === 'count') {
+        return classes.sort((a, b) => b.studentCount - a.studentCount);
+    } else {
+        return classes.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    }
+};
+
+router.use(isAdminAuthenticated);
 
 router.get('/dashboard', asyncHandler(async (req, res) => {
-        const user = req.session.user;
+        const user = req.session.adminUser;
         const sortBy = req.query.sort || 'name'; // 'name' or 'count'
         let classes = [];
         let newStudents = [];
@@ -20,22 +29,16 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
                 [user.name, user.name]
             );
             
-            // 정렬 적용
-            if (sortBy === 'count') {
-                classRows.sort((a, b) => b.studentCount - a.studentCount);
-            } else {
-                classRows.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-            }
-            
-            classes = classRows;
+            classes = sortClasses(classRows, sortBy);
             
             const [studentRows] = await db.execute(`
-                SELECT s.id, s.name, s.sphone, s.pphone, 
+                SELECT s.id, s.name, s.sphone, s.pphone,
                        DATE_FORMAT(s.insert_date, "%Y.%m.%d") as insert_date
-                FROM class_status cs, student s, class_info ci
+                FROM class_status cs
+                JOIN student s ON s.id = cs.student_id
+                JOIN class_info ci ON cs.class_id = ci.id
                 WHERE (ci.teacherOne = ? OR ci.teacherTwo = ?)
-                AND cs.class_id = ci.id 
-                AND s.id = cs.student_id 
+                AND cs.status = 1
                 AND DATE_FORMAT(s.insert_date, "%Y%m") = DATE_FORMAT(NOW(), "%Y%m")
                 ORDER BY s.name ASC
             `, [user.name, user.name]);
@@ -48,21 +51,14 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
                 []
             );
             
-            // 정렬 적용
-            if (sortBy === 'count') {
-                classRows.sort((a, b) => b.studentCount - a.studentCount);
-            } else {
-                classRows.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-            }
-            
-            classes = classRows;
+            classes = sortClasses(classRows, sortBy);
             
             const [studentRows] = await db.execute(`
-                SELECT s.id, s.name, s.sphone, s.pphone, 
+                SELECT s.id, s.name, s.sphone, s.pphone,
                        DATE_FORMAT(s.insert_date, "%Y.%m.%d") as insert_date
-                FROM class_status cs, student s, class_info ci
-                WHERE cs.class_id = ci.id 
-                AND s.id = cs.student_id 
+                FROM class_status cs
+                JOIN student s ON s.id = cs.student_id
+                WHERE cs.status = 1
                 AND DATE_FORMAT(s.insert_date, "%Y%m") = DATE_FORMAT(NOW(), "%Y%m")
                 ORDER BY s.name ASC
             `);
@@ -78,7 +74,7 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
 }));
 
 router.get('/class/:id', asyncHandler(async (req, res) => {
-        const user = req.session.user;
+        const user = req.session.adminUser;
         const classId = req.params.id;
         
         const [classInfo] = await db.execute(
@@ -118,7 +114,7 @@ router.get('/class/:id', asyncHandler(async (req, res) => {
 }));
 
 router.get('/student/:id', asyncHandler(async (req, res) => {
-        const user = req.session.user;
+        const user = req.session.adminUser;
         const studentId = req.params.id;
         
         const [studentInfo] = await db.execute(`

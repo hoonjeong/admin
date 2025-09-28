@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+    <%- include('../partials/header-styles') %>
+    <style>
+        body {
+            padding: 20px;
+            padding-top: 100px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .profile-section {
+            margin-bottom: 30px;
+        }
+
+        .profile-section h2 {
+            color: #2196f3;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            flex: 0 0 120px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .btn-group {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .back-link a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <div class="container">
+        <div class="logo">
+            <img src="/image/logo.png" alt="이든배움국어학원">
+        </div>
+
+        <h1>내정보</h1>
+
+        <div class="profile-section">
+            <h2>기본 정보</h2>
+            <div class="info-row">
+                <div class="info-label">이름:</div>
+                <div class="info-value"><%= student.name %></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">학교:</div>
+                <div class="info-value"><%= student.school %></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">학년:</div>
+                <div class="info-value"><%= student.grade %><%= student.year %></div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>연락처 정보</h2>
+            <div class="info-row">
+                <div class="info-label">학부모 번호:</div>
+                <div class="info-value"><%= student.pphone %></div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">학생 번호:</div>
+                <div class="info-value"><%= student.sphone %></div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>계정 정보</h2>
+            <div class="info-row">
+                <div class="info-label">이메일:</div>
+                <div class="info-value"><%= user.email %></div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <a href="#" class="btn btn-primary" onclick="alert('수정 기능은 추후 제공될 예정입니다.')">수정하기</a>
+        </div>
+
+        <div class="back-link">
+            <a href="/">← 메인페이지로 돌아가기</a>
+        </div>
+    </div>
+
+    <%- include('../partials/header-scripts') %>
+</body>
+</html>

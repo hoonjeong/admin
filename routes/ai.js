@@ -4,22 +4,20 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const axios = require('axios');
+const logger = require('../utils/logger');
 
-// 동기 fs 모듈도 필요
 const fsSync = require('fs');
 
-// Multer 설정 - 파일 업로드
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(__dirname, '../upload/ai');
-        // 동기적으로 디렉토리 생성
         try {
             if (!fsSync.existsSync(uploadDir)) {
                 fsSync.mkdirSync(uploadDir, { recursive: true });
             }
             cb(null, uploadDir);
         } catch (error) {
-            console.error('Directory creation error:', error);
+            logger.error('Directory creation error', error);
             cb(error);
         }
     },
@@ -32,9 +30,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { 
-        fileSize: 10 * 1024 * 1024, // 10MB 제한
-        files: 1 // 파일 개수 제한
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1
     },
     fileFilter: function (req, file, cb) {
         // 허용된 MIME 타입
@@ -66,8 +64,8 @@ const upload = multer({
 });
 
 // 미들웨어: 관리자 권한 체크
-const checkAdminAuth = (req, res, next) => {
-    if (!req.session.user || req.session.user.code !== 'O') {
+const checkTeacherAuth = (req, res, next) => {
+    if (!req.session.adminUser || (req.session.adminUser.code !== 'O' && req.session.adminUser.code !== 'T')) {
         return res.redirect('/auth/login');
     }
     next();
@@ -75,24 +73,24 @@ const checkAdminAuth = (req, res, next) => {
 
 // Gemini API 키 (환경 변수에서 가져오거나 하드코딩된 값 사용)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
 // API 키 확인
 if (!GEMINI_API_KEY) {
-    console.error('Warning: GEMINI_API_KEY is not set in environment variables');
+    logger.warn('GEMINI_API_KEY is not set in environment variables');
 }
 
 // 시험지 분석기 페이지
-router.get('/exam-analyzer', checkAdminAuth, (req, res) => {
-    res.render('ai/exam-analyzer', { user: req.session.user });
+router.get('/exam-analyzer', checkTeacherAuth, (req, res) => {
+    res.render('ai/exam-analyzer', { user: req.session.adminUser });
 });
 
 // 시험지 분석 API
-router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
+router.post('/api/analyze-exam', checkTeacherAuth, (req, res, next) => {
     upload.single('examFile')(req, res, async (err) => {
         // Multer 에러 처리
         if (err) {
-            console.error('Upload error:', err);
+            logger.error('Upload error', err);
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({ 
                     success: false, 
@@ -124,7 +122,7 @@ router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
             try {
                 await fs.access(req.file.path);
             } catch (accessError) {
-                console.error('File access error:', accessError);
+                logger.error('File access error', accessError);
                 return res.status(500).json({ 
                     success: false, 
                     error: '업로드된 파일을 찾을 수 없습니다.' 
@@ -138,7 +136,6 @@ router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
             // MIME 타입 결정
             let mimeType = req.file.mimetype || 'image/jpeg';
             
-            // PDF나 문서 파일의 경우 적절한 MIME 타입 설정
             const ext = path.extname(req.file.originalname).toLowerCase();
             if (ext === '.pdf') {
                 mimeType = 'application/pdf';
@@ -246,7 +243,6 @@ router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
             }
             
             // Gemini API 호출
-            console.log('Calling Gemini API...');
             const response = await axios.post(
                 `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
                 {
@@ -276,33 +272,33 @@ router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
             try {
                 await fs.unlink(req.file.path);
             } catch (unlinkError) {
-                console.error('File deletion error:', unlinkError);
+                logger.error('File deletion error', unlinkError);
             }
 
             if (response.data && response.data.candidates && response.data.candidates[0]) {
                 const content = response.data.candidates[0].content.parts[0].text;
                 res.json({ success: true, content: content });
             } else {
-                console.error('Invalid API response:', response.data);
+                logger.error('Invalid API response', response.data);
                 res.status(500).json({ 
                     success: false, 
                     error: 'AI 응답을 받지 못했습니다.' 
                 });
             }
         } catch (error) {
-            console.error('Exam analysis error:', error.response?.data || error.message);
+            logger.error('Exam analysis error', error.response?.data || error.message);
             
             // 파일이 있으면 삭제
             if (req.file && req.file.path) {
                 try {
                     await fs.unlink(req.file.path);
                 } catch (unlinkError) {
-                    console.error('File cleanup error:', unlinkError);
+                    logger.error('File cleanup error', unlinkError);
                 }
             }
             
             // 에러 로깅
-            console.error('Gemini API Error:', {
+            logger.error('Gemini API Error', {
                 message: error.message,
                 status: error.response?.status,
                 statusText: error.response?.statusText,
@@ -335,16 +331,16 @@ router.post('/api/analyze-exam', checkAdminAuth, (req, res, next) => {
 });
 
 // 독서 교재 만들기 페이지
-router.get('/reading-material', checkAdminAuth, (req, res) => {
-    res.render('ai/reading-material', { user: req.session.user });
+router.get('/reading-material', checkTeacherAuth, (req, res) => {
+    res.render('ai/reading-material', { user: req.session.adminUser });
 });
 
 // 독서 교재 생성 API
-router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) => {
+router.post('/api/generate-reading-material', checkTeacherAuth, (req, res, next) => {
     upload.single('bookFile')(req, res, async (err) => {
         // Multer 에러 처리
         if (err) {
-            console.error('Upload error:', err);
+            logger.error('Upload error', err);
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({ 
                     success: false, 
@@ -378,7 +374,7 @@ router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) =
             try {
                 await fs.access(req.file.path);
             } catch (accessError) {
-                console.error('File access error:', accessError);
+                logger.error('File access error', accessError);
                 return res.status(500).json({ 
                     success: false, 
                     error: '업로드된 파일을 찾을 수 없습니다.' 
@@ -392,7 +388,6 @@ router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) =
             // MIME 타입 결정
             let mimeType = req.file.mimetype || 'image/jpeg';
             
-            // PDF나 문서 파일의 경우 적절한 MIME 타입 설정
             const ext = path.extname(req.file.originalname).toLowerCase();
             if (ext === '.pdf') {
                 mimeType = 'application/pdf';
@@ -502,7 +497,6 @@ router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) =
             }
             
             // Gemini API 호출
-            console.log('Calling Gemini API...');
             const response = await axios.post(
                 `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
                 {
@@ -532,28 +526,28 @@ router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) =
             try {
                 await fs.unlink(req.file.path);
             } catch (unlinkError) {
-                console.error('File deletion error:', unlinkError);
+                logger.error('File deletion error', unlinkError);
             }
 
             if (response.data && response.data.candidates && response.data.candidates[0]) {
                 const content = response.data.candidates[0].content.parts[0].text;
                 res.json({ success: true, content: content });
             } else {
-                console.error('Invalid API response:', response.data);
+                logger.error('Invalid API response', response.data);
                 res.status(500).json({ 
                     success: false, 
                     error: 'AI 응답을 받지 못했습니다.' 
                 });
             }
         } catch (error) {
-            console.error('Reading material generation error:', error.response?.data || error.message);
+            logger.error('Reading material generation error', error.response?.data || error.message);
             
             // 파일이 있으면 삭제
             if (req.file && req.file.path) {
                 try {
                     await fs.unlink(req.file.path);
                 } catch (unlinkError) {
-                    console.error('File cleanup error:', unlinkError);
+                    logger.error('File cleanup error', unlinkError);
                 }
             }
             
@@ -578,17 +572,17 @@ router.post('/api/generate-reading-material', checkAdminAuth, (req, res, next) =
 });
 
 // 수행평가 첨삭 페이지
-router.get('/performance-review', checkAdminAuth, (req, res) => {
-    res.render('ai/performance-review', { user: req.session.user });
+router.get('/performance-review', checkTeacherAuth, (req, res) => {
+    res.render('ai/performance-review', { user: req.session.adminUser });
 });
 
 // 연구 주제 추천 페이지
-router.get('/research-topic', checkAdminAuth, (req, res) => {
-    res.render('ai/research-topic', { user: req.session.user });
+router.get('/research-topic', checkTeacherAuth, (req, res) => {
+    res.render('ai/research-topic', { user: req.session.adminUser });
 });
 
 // 수행평가 첨삭 API
-router.post('/api/review-performance', checkAdminAuth, async (req, res) => {
+router.post('/api/review-performance', checkTeacherAuth, async (req, res) => {
     try {
         const { conditions, criteria, content } = req.body;
 
@@ -644,13 +638,13 @@ ${content}
             res.json({ success: false, error: 'AI 응답을 받지 못했습니다.' });
         }
     } catch (error) {
-        console.error('Performance review error:', error);
+        logger.error('Performance review error', error);
         res.json({ success: false, error: '첨삭 중 오류가 발생했습니다.' });
     }
 });
 
 // 연구 주제 추천 API
-router.post('/api/research-topic', checkAdminAuth, async (req, res) => {
+router.post('/api/research-topic', checkTeacherAuth, async (req, res) => {
     try {
         const { career, subject, keywords, additionalTopic, fieldType } = req.body;
 
@@ -742,18 +736,18 @@ AI는 아래의 사항들을 고려하여 주제를 제안해야 합니다.
             res.json({ success: false, error: 'AI 응답을 받지 못했습니다.' });
         }
     } catch (error) {
-        console.error('Research topic generation error:', error);
+        logger.error('Research topic generation error', error);
         res.json({ success: false, error: '주제 추천 중 오류가 발생했습니다.' });
     }
 });
 
 // 블로그 컨텐츠 생성기 페이지
-router.get('/blog-generator', checkAdminAuth, (req, res) => {
-    res.render('ai/blog-generator', { user: req.session.user });
+router.get('/blog-generator', checkTeacherAuth, (req, res) => {
+    res.render('ai/blog-generator', { user: req.session.adminUser });
 });
 
 // 블로그 컨텐츠 생성 API
-router.post('/api/generate-blog', checkAdminAuth, async (req, res) => {
+router.post('/api/generate-blog', checkTeacherAuth, async (req, res) => {
     try {
         const { topic, title, keywords, reference } = req.body;
 
@@ -842,7 +836,7 @@ router.post('/api/generate-blog', checkAdminAuth, async (req, res) => {
             res.json({ success: false, error: 'AI 응답을 받지 못했습니다.' });
         }
     } catch (error) {
-        console.error('Blog generation error:', error);
+        logger.error('Blog generation error', error);
         res.json({ success: false, error: error.message });
     }
 });

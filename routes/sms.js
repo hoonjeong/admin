@@ -2,11 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { sendSMS } = require('../utils/sms');
-const { initSMSTables } = require('../utils/dbInit');
-const { isAdmin } = require('../middleware/auth');
-
-// SMS 테이블 초기화 (앱 시작 시 한 번만 실행)
-initSMSTables();
+const { isAdmin } = require('../middleware/adminAuth');
+const { handleControllerError } = require('../utils/errorHandler');
+const logger = require('../utils/logger');
 
 // 문자 발송 페이지
 router.get('/send', isAdmin, async (req, res) => {
@@ -57,12 +55,11 @@ router.get('/send', isAdmin, async (req, res) => {
         const memo = memoRows.length > 0 ? memoRows[0].memo : '';
 
         res.render('sms/send', { 
-            user: req.session.user,
+            user: req.session.adminUser,
             classifiedClasses: classifiedClasses,
             memo: memo
         });
     } catch (error) {
-        const { handleControllerError } = require('../utils/errorHandler');
         handleControllerError(res, error, 'SMS send page error');
     }
 });
@@ -117,7 +114,7 @@ router.post('/api/get-students', isAdmin, async (req, res) => {
             data: Object.values(groupedStudents)
         });
     } catch (error) {
-        console.error('Get students error:', error);
+        logger.error('Get students error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -144,7 +141,7 @@ router.post('/api/send', isAdmin, async (req, res) => {
                 await sendSMS(recipient.phone, message);
                 successCount++;
             } catch (error) {
-                console.error('SMS 발송 실패:', error);
+                logger.error('SMS 발송 실패', error);
                 failCount++;
             }
         }
@@ -155,7 +152,7 @@ router.post('/api/send', isAdmin, async (req, res) => {
             failCount: failCount
         });
     } catch (error) {
-        console.error('SMS send error:', error);
+        logger.error('SMS send error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -189,7 +186,7 @@ router.post('/api/save-memo', isAdmin, async (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Save memo error:', error);
+        logger.error('Save memo error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -199,8 +196,6 @@ router.get('/history', isAdmin, async (req, res) => {
     try {
         const { searchType = 'all', searchKeyword = '' } = req.query;
         
-        // 디버깅용 로그
-        console.log('SMS History Search:', { searchType, searchKeyword });
         
         let query = `
             SELECT phone, message, result_message, send_time
@@ -230,22 +225,18 @@ router.get('/history', isAdmin, async (req, res) => {
 
         query += ` ORDER BY id DESC LIMIT 100`;
         
-        // 디버깅용 로그
-        console.log('SMS History Query:', query);
-        console.log('SMS History Params:', params);
         
         const [historyRows] = await db.execute(query, params);
         
-        console.log('SMS History Results:', historyRows.length, 'rows');
 
         res.render('sms/history', { 
-            user: req.session.user,
+            user: req.session.adminUser,
             history: historyRows,
             searchType: searchType || 'all',
             searchKeyword: searchKeyword || ''
         });
     } catch (error) {
-        console.error('SMS history error:', error);
+        logger.error('SMS history error', error);
         res.status(500).render('error', { error: error });
     }
 });

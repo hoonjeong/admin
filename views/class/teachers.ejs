@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 관리 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .teacher-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .teacher-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .teacher-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .teacher-details {
+            flex: 1;
+        }
+
+        .teacher-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .teacher-meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .teacher-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .add-teacher-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .add-teacher-form {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .teacher-info {
+                flex-direction: column;
+                align-items: start;
+                gap: 15px;
+            }
+
+            .teacher-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .add-teacher-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="container">
+        <h2 class="page-title">선생님 관리</h2>
+
+        <!-- 선생님 추가 폼 -->
+        <div class="add-teacher-section">
+            <h4 class="mb-3">새 선생님 추가</h4>
+            <form id="addTeacherForm" class="add-teacher-form">
+                <div class="form-group">
+                    <label for="teacherName" class="form-label">이름 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="teacherName" name="name" required placeholder="홍길동">
+                </div>
+                <div class="form-group">
+                    <label for="teacherPhone" class="form-label">전화번호 <span class="text-danger">*</span></label>
+                    <input type="tel" class="form-control" id="teacherPhone" name="phone" required placeholder="010-1234-5678">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 추가하기
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 선생님 목록 -->
+        <div id="teachersList">
+            <% if (teachers && teachers.length > 0) { %>
+                <% teachers.forEach(function(teacher) { %>
+                    <div class="teacher-card" id="teacher-<%= teacher.id %>">
+                        <div class="teacher-info">
+                            <div class="teacher-details">
+                                <div class="teacher-name"><%= teacher.name %></div>
+                                <div class="teacher-meta">
+                                    <% if (teacher.email) { %>
+                                        📧 <%= teacher.email %> |
+                                    <% } %>
+                                    📞 <%= teacher.phone || '전화번호 없음' %> |
+                                    📅 가입일: <%= teacher.insert_time ? new Date(teacher.insert_time).toLocaleDateString('ko-KR') : '미등록' %>
+                                </div>
+                            </div>
+                            <div class="teacher-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editTeacher(<%= teacher.id %>)">
+                                    <i class="bi bi-pencil"></i> 수정
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(<%= teacher.id %>, '<%= teacher.name %>')">
+                                    <i class="bi bi-trash"></i> 삭제
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-state">
+                    <div class="empty-state-icon">👨‍🏫</div>
+                    <h4>등록된 선생님이 없습니다</h4>
+                    <p class="text-muted">위의 폼을 사용해서 새로운 선생님을 추가해보세요.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- 수정 모달 -->
+    <div class="modal fade" id="editTeacherModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">선생님 정보 수정</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTeacherForm">
+                        <input type="hidden" id="editTeacherId">
+                        <div class="mb-3">
+                            <label for="editTeacherName" class="form-label">이름 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editTeacherName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTeacherEmail" class="form-label">이메일</label>
+                            <input type="email" class="form-control" id="editTeacherEmail" placeholder="example@email.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTeacherPhone" class="form-label">전화번호 <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="editTeacherPhone" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="updateTeacher()">수정하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        // 전화번호 자동 포맷팅
+        function formatPhoneNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value.length > 3 && value.length <= 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length > 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+            }
+            input.value = value;
+        }
+
+        document.getElementById('teacherPhone').addEventListener('input', function() {
+            formatPhoneNumber(this);
+        });
+
+        document.getElementById('editTeacherPhone').addEventListener('input', function() {
+            formatPhoneNumber(this);
+        });
+
+        // 선생님 추가
+        document.getElementById('addTeacherForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/class/teachers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('추가 중 오류가 발생했습니다.');
+                console.error('Error:', error);
+            }
+        });
+
+        // 선생님 수정
+        async function editTeacher(teacherId) {
+            try {
+                const response = await fetch(`/class/teachers/${teacherId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const teacher = result.teacher;
+                    document.getElementById('editTeacherId').value = teacher.id;
+                    document.getElementById('editTeacherName').value = teacher.name;
+                    document.getElementById('editTeacherEmail').value = teacher.email || '';
+                    document.getElementById('editTeacherPhone').value = teacher.phone || '';
+
+                    new bootstrap.Modal(document.getElementById('editTeacherModal')).show();
+                } else {
+                    alert('선생님 정보를 불러올 수 없습니다.');
+                }
+            } catch (error) {
+                alert('정보 조회 중 오류가 발생했습니다.');
+                console.error('Error:', error);
+            }
+        }
+
+        // 선생님 정보 업데이트
+        async function updateTeacher() {
+            const teacherId = document.getElementById('editTeacherId').value;
+            const data = {
+                name: document.getElementById('editTeacherName').value,
+                email: document.getElementById('editTeacherEmail').value,
+                phone: document.getElementById('editTeacherPhone').value
+            };
+
+            try {
+                const response = await fetch(`/class/teachers/${teacherId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    bootstrap.Modal.getInstance(document.getElementById('editTeacherModal')).hide();
+                    location.reload();
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('수정 중 오류가 발생했습니다.');
+                console.error('Error:', error);
+            }
+        }
+
+        // 선생님 삭제
+        async function deleteTeacher(teacherId, teacherName) {
+            if (!confirm(`'${teacherName}' 선생님을 삭제하시겠습니까?\n\n※ 주의: 현재 수강반에서 활동 중인 선생님은 삭제할 수 없습니다.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/class/teachers/${teacherId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    document.getElementById(`teacher-${teacherId}`).remove();
+
+                    // 목록이 비어있으면 empty state 표시
+                    const teachersList = document.getElementById('teachersList');
+                    if (teachersList.children.length === 0) {
+                        location.reload();
+                    }
+                } else {
+                    alert('오류: ' + result.error);
+                }
+            } catch (error) {
+                alert('삭제 중 오류가 발생했습니다.');
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

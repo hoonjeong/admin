@@ -1,22 +1,24 @@
 const express = require('express');
 const router = express.Router();
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAdminAuthenticated, isAdmin } = require('../middleware/adminAuth');
 const { asyncHandler } = require('../utils/asyncHandler');
 const db = require('../config/database');
+const logger = require('../utils/logger');
 
 // 수강생 추가 페이지
-router.get('/add', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/add', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         res.render('student/add', {
-            user: req.session.user
+            user: req.session.adminUser
         });
     } catch (error) {
-        handleError(res, error, 'Error loading student add page');
+        logger.error('Error loading student add page', error);
+        res.status(500).render('error', { error: 'Error loading student add page' });
     }
 });
 
 // 수강생 추가 처리
-router.post('/add', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/add', [isAdminAuthenticated, isAdmin], async (req, res) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -42,14 +44,15 @@ router.post('/add', [isAuthenticated, isAdmin], async (req, res) => {
         res.json({ success: true, message: '수강생이 등록되었습니다.' });
     } catch (error) {
         await connection.rollback();
-        handleError(res, error, 'Error adding student');
+        logger.error('Error adding student', error);
+        res.status(500).json({ success: false, error: 'Error adding student' });
     } finally {
         connection.release();
     }
 });
 
 // 수강생 관리 페이지
-router.get('/manage', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/manage', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const { search, school, sort } = req.query;
         
@@ -96,12 +99,12 @@ router.get('/manage', [isAuthenticated, isAdmin], async (req, res) => {
             );
             schools = schoolResults;
         } catch (dbError) {
-            console.error('Database query error:', dbError);
+            logger.error('Database query error', dbError);
             // 데이터베이스 오류 시에도 빈 배열로 페이지 렌더링
         }
         
         res.render('student/manage', {
-            user: req.session.user,
+            user: req.session.adminUser,
             students: students,
             schools: schools,
             search: search || '',
@@ -109,10 +112,10 @@ router.get('/manage', [isAuthenticated, isAdmin], async (req, res) => {
             selectedSort: sort || 'name_asc'
         });
     } catch (error) {
-        handleError(res, error, 'Error loading student manage page');
+        logger.error('Error loading student manage page', error);
         // 오류 발생 시 기본값으로 페이지 렌더링
         res.render('student/manage', {
-            user: req.session.user,
+            user: req.session.adminUser,
             students: [],
             schools: [],
             search: '',
@@ -123,7 +126,7 @@ router.get('/manage', [isAuthenticated, isAdmin], async (req, res) => {
 });
 
 // 퇴원생 관리 페이지
-router.get('/exited', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/exited', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const { search, school, sort } = req.query;
         
@@ -165,7 +168,7 @@ router.get('/exited', [isAuthenticated, isAdmin], async (req, res) => {
         );
         
         res.render('student/exited', {
-            user: req.session.user,
+            user: req.session.adminUser,
             students: students,
             schools: schools,
             search: search || '',
@@ -173,9 +176,9 @@ router.get('/exited', [isAuthenticated, isAdmin], async (req, res) => {
             selectedSort: sort || 'name_asc'
         });
     } catch (error) {
-        handleError(res, error, 'Error loading exited students page');
+        logger.error('Error loading exited students page', error);
         res.render('student/exited', {
-            user: req.session.user,
+            user: req.session.adminUser,
             students: [],
             schools: [],
             search: '',
@@ -186,7 +189,7 @@ router.get('/exited', [isAuthenticated, isAdmin], async (req, res) => {
 });
 
 // 학생 퇴원 처리
-router.post('/:id/exit', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/:id/exit', [isAdminAuthenticated, isAdmin], async (req, res) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -221,14 +224,15 @@ router.post('/:id/exit', [isAuthenticated, isAdmin], async (req, res) => {
         res.json({ success: true, message: '퇴원 처리되었습니다.' });
     } catch (error) {
         await connection.rollback();
-        handleError(res, error, 'Error exiting student');
+        logger.error('Error exiting student', error);
+        res.status(500).json({ success: false, error: 'Error exiting student' });
     } finally {
         connection.release();
     }
 });
 
 // 학생 재원 처리
-router.post('/:id/rejoin', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/:id/rejoin', [isAdminAuthenticated, isAdmin], async (req, res) => {
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -257,14 +261,15 @@ router.post('/:id/rejoin', [isAuthenticated, isAdmin], async (req, res) => {
         res.json({ success: true, message: '재원 처리되었습니다.' });
     } catch (error) {
         await connection.rollback();
-        handleError(res, error, 'Error rejoining student');
+        logger.error('Error rejoining student', error);
+        res.status(500).json({ success: false, error: 'Error rejoining student' });
     } finally {
         connection.release();
     }
 });
 
 // 수강 관리 페이지
-router.get('/:id/courses', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/:id/courses', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const studentId = req.params.id;
         
@@ -296,18 +301,19 @@ router.get('/:id/courses', [isAuthenticated, isAdmin], async (req, res) => {
         );
         
         res.render('student/courses', {
-            user: req.session.user,
+            user: req.session.adminUser,
             student: studentInfo[0],
             classes: classes,
             courses: courses
         });
     } catch (error) {
-        handleError(res, error, 'Error loading courses page');
+        logger.error('Error loading courses page', error);
+        res.status(500).render('error', { error: 'Error loading courses page' });
     }
 });
 
 // 수강반 등록
-router.post('/:studentId/courses/add', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/:studentId/courses/add', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const { studentId } = req.params;
         const { classId, startTime } = req.body;
@@ -329,12 +335,13 @@ router.post('/:studentId/courses/add', [isAuthenticated, isAdmin], async (req, r
         
         res.json({ success: true, message: '수강반이 등록되었습니다.' });
     } catch (error) {
-        handleError(res, error, 'Error adding course');
+        logger.error('Error adding course', error);
+        res.status(500).json({ success: false, error: 'Error adding course' });
     }
 });
 
 // 수강 상태 변경 (종강/재시작)
-router.post('/courses/:id/toggle', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/courses/:id/toggle', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const courseId = req.params.id;
         
@@ -366,12 +373,13 @@ router.post('/courses/:id/toggle', [isAuthenticated, isAdmin], async (req, res) 
             res.json({ success: true, message: '수강이 재시작되었습니다.' });
         }
     } catch (error) {
-        handleError(res, error, 'Error toggling course status');
+        logger.error('Error toggling course status', error);
+        res.status(500).json({ success: false, error: 'Error toggling course status' });
     }
 });
 
 // 학생 정보 수정 페이지
-router.get('/:id/edit', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/:id/edit', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const studentId = req.params.id;
         
@@ -385,16 +393,17 @@ router.get('/:id/edit', [isAuthenticated, isAdmin], async (req, res) => {
         }
         
         res.render('student/edit', {
-            user: req.session.user,
+            user: req.session.adminUser,
             student: student[0]
         });
     } catch (error) {
-        handleError(res, error, 'Error loading student edit page');
+        logger.error('Error loading student edit page', error);
+        res.status(500).render('error', { error: 'Error loading student edit page' });
     }
 });
 
 // 학생 정보 수정 처리
-router.put('/:id', [isAuthenticated, isAdmin], async (req, res) => {
+router.put('/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const studentId = req.params.id;
         const { name, school, grade, year, sphone, pphone, address, specialty, memo } = req.body;
@@ -410,7 +419,8 @@ router.put('/:id', [isAuthenticated, isAdmin], async (req, res) => {
         
         res.json({ success: true, message: '학생 정보가 수정되었습니다.' });
     } catch (error) {
-        handleError(res, error, 'Error updating student');
+        logger.error('Error updating student', error);
+        res.status(500).json({ success: false, error: 'Error updating student' });
     }
 });
 

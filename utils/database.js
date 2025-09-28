@@ -14,23 +14,7 @@ async function getClassesWithStudentCount(db, whereClause = '', params = []) {
     return rows;
 }
 
-async function getLecturesWithCounts(db, teacherId) {
-    const query = `
-        SELECT 
-            l.*,
-            COUNT(DISTINCT q.id) as questionCount,
-            COUNT(DISTINCT f.id) as fileCount
-        FROM lecture l
-        LEFT JOIN question q ON l.id = q.lecture_id
-        LEFT JOIN file_status f ON l.id = f.lecture_id
-        WHERE l.teacher_id = ?
-        GROUP BY l.id
-        ORDER BY l.created_at DESC
-    `;
-    
-    const [rows] = await db.execute(query, [teacherId]);
-    return rows;
-}
+// Function removed - was using incorrect column names and not being used
 
 async function getPostsWithCommentCount(db, params = {}) {
     const { page = 1, limit = 20, search = '', category = '' } = params;
@@ -56,8 +40,8 @@ async function getPostsWithCommentCount(db, params = {}) {
     
     // Get total count
     const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
-    const countResult = await db.query(countQuery, queryParams);
-    const totalCount = countResult[0][0].total;
+    const [countResult] = await db.execute(countQuery, queryParams);
+    const totalCount = countResult[0].total;
     
     // Get posts with pagination
     const postsQuery = `
@@ -70,7 +54,7 @@ async function getPostsWithCommentCount(db, params = {}) {
     `;
     queryParams.push(limit, offset);
     
-    const [posts] = await db.query(postsQuery, queryParams);
+    const [posts] = await db.execute(postsQuery, queryParams);
     
     // Get comment counts for all posts
     if (posts.length > 0) {
@@ -81,7 +65,7 @@ async function getPostsWithCommentCount(db, params = {}) {
             WHERE post_id IN (${postIds.map(() => '?').join(',')})
             GROUP BY post_id
         `;
-        const [commentCounts] = await db.query(commentQuery, postIds);
+        const [commentCounts] = await db.execute(commentQuery, postIds);
         
         // Create a map for quick lookup
         const commentMap = {};
@@ -107,14 +91,14 @@ async function getPostWithDetails(db, postId) {
     
     try {
         // Increment view count
-        await connection.query(
+        await connection.execute(
             'UPDATE post_info SET read_count = read_count + 1 WHERE id = ?',
             [postId]
         );
-        
+
         // Get post details
-        const [posts] = await connection.query(
-            `SELECT p.*, u.name as writer, 
+        const [posts] = await connection.execute(
+            `SELECT p.*, u.name as writer,
                     DATE_FORMAT(p.insert_time, "%Y-%m-%d %H:%i") as formatted_date
              FROM post_info p
              JOIN admin_user_info u ON u.id = p.user_id
@@ -129,15 +113,15 @@ async function getPostWithDetails(db, postId) {
         const post = posts[0];
         
         // Get attachments
-        const [files] = await connection.query(
+        const [files] = await connection.execute(
             `SELECT f.* FROM file_info f
              JOIN post_file_status pfs ON f.id = pfs.file_id
              WHERE pfs.post_id = ?`,
             [postId]
         );
-        
+
         // Get comments
-        const [comments] = await connection.query(
+        const [comments] = await connection.execute(
             `SELECT c.*, DATE_FORMAT(c.insert_time, "%Y-%m-%d %H:%i") as formatted_date
              FROM comment c
              WHERE c.post_id = ?
@@ -163,7 +147,7 @@ async function deletePostWithFiles(db, postId) {
         await connection.beginTransaction();
         
         // Get file paths before deletion
-        const [files] = await connection.query(
+        const [files] = await connection.execute(
             `SELECT f.filepath FROM file_info f
              JOIN post_file_status pfs ON f.id = pfs.file_id
              WHERE pfs.post_id = ?`,
@@ -178,9 +162,9 @@ async function deletePostWithFiles(db, postId) {
         }
         
         // Delete database records
-        await connection.query('DELETE FROM comment WHERE post_id = ?', [postId]);
-        await connection.query('DELETE FROM post_file_status WHERE post_id = ?', [postId]);
-        await connection.query('DELETE FROM post_info WHERE id = ?', [postId]);
+        await connection.execute('DELETE FROM comment WHERE post_id = ?', [postId]);
+        await connection.execute('DELETE FROM post_file_status WHERE post_id = ?', [postId]);
+        await connection.execute('DELETE FROM post_info WHERE id = ?', [postId]);
         
         await connection.commit();
         return true;
@@ -194,7 +178,6 @@ async function deletePostWithFiles(db, postId) {
 
 module.exports = {
     getClassesWithStudentCount,
-    getLecturesWithCounts,
     getPostsWithCommentCount,
     getPostWithDetails,
     deletePostWithFiles

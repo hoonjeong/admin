@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAdminAuthenticated, isAdmin } = require('../middleware/adminAuth');
 const { asyncHandler } = require('../utils/asyncHandler');
 const db = require('../config/database');
+const logger = require('../utils/logger');
 
 // 수강반 추가 페이지
-router.get('/add', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/add', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         // 선생님 목록 조회 (code가 'T'인 사용자)
         const [teachers] = await db.execute(
@@ -14,16 +15,17 @@ router.get('/add', [isAuthenticated, isAdmin], async (req, res) => {
         );
         
         res.render('class/add', {
-            user: req.session.user,
+            user: req.session.adminUser,
             teachers: teachers
         });
     } catch (error) {
-        handleError(res, error, 'Error loading class add page');
+        logger.error('Error loading class add page', error);
+        res.status(500).render('error', { error });
     }
 });
 
 // 수강반 추가 처리
-router.post('/add', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/add', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const { name, school, grade, day, hour, minute, teacherOne, teacherTwo } = req.body;
         
@@ -38,12 +40,13 @@ router.post('/add', [isAuthenticated, isAdmin], async (req, res) => {
         
         res.json({ success: true, message: '수강반이 추가되었습니다.' });
     } catch (error) {
-        handleError(res, error, 'Error adding class');
+        logger.error('Error adding class', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // 수강반 수정 페이지 (목록)
-router.get('/edit', [isAuthenticated, isAdmin], async (req, res) => {
+router.get('/edit', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const { search, teacher, status = 'active' } = req.query;
         
@@ -82,7 +85,7 @@ router.get('/edit', [isAuthenticated, isAdmin], async (req, res) => {
         const [classes] = await db.execute(query, params);
         
         res.render('class/edit', {
-            user: req.session.user,
+            user: req.session.adminUser,
             classes: classes,
             teachers: teachers,
             search: search || '',
@@ -90,41 +93,185 @@ router.get('/edit', [isAuthenticated, isAdmin], async (req, res) => {
             selectedStatus: status
         });
     } catch (error) {
-        handleError(res, error, 'Error loading class edit page');
+        logger.error('Error loading class edit page', error);
+        res.status(500).render('error', { error });
     }
 });
 
-// 수강반 정보 조회 (수정용)
-router.get('/:id', [isAuthenticated, isAdmin], async (req, res) => {
+// 선생님 관리 페이지 (관리자만 접근) - /:id 보다 먼저 배치
+router.get('/teachers', [isAdminAuthenticated, isAdmin], async (req, res) => {
+    try {
+        const [teachers] = await db.execute(
+            'SELECT id, name, email, phone, insert_time FROM admin_user_info WHERE code = ? ORDER BY name ASC',
+            ['T']
+        );
+
+        res.render('class/teachers', {
+            user: req.session.adminUser,
+            teachers: teachers
+        });
+    } catch (error) {
+        logger.error('Error loading teachers page', error);
+        res.status(500).render('error', { error });
+    }
+});
+
+// 선생님 추가
+router.post('/teachers', [isAdminAuthenticated, isAdmin], async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+
+        if (!name || !phone) {
+            return res.json({ success: false, error: '이름과 전화번호를 입력해주세요.' });
+        }
+
+        // 중복 체크
+        const [existing] = await db.execute(
+            'SELECT id FROM admin_user_info WHERE name = ? AND phone = ?',
+            [name, phone]
+        );
+
+        if (existing.length > 0) {
+            return res.json({ success: false, error: '이미 등록된 선생님입니다.' });
+        }
+
+        await db.execute(
+            'INSERT INTO admin_user_info (name, phone, code, insert_time) VALUES (?, ?, ?, NOW())',
+            [name, phone, 'T']
+        );
+
+        res.json({ success: true, message: '선생님이 추가되었습니다.' });
+    } catch (error) {
+        logger.error('Error adding teacher', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 선생님 정보 조회 (수정용)
+router.get('/teachers/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
+    try {
+        const teacherId = req.params.id;
+
+        const [teacher] = await db.execute(
+            'SELECT id, name, email, phone FROM admin_user_info WHERE id = ? AND code = ?',
+            [teacherId, 'T']
+        );
+
+        if (teacher.length === 0) {
+            return res.json({ success: false, error: '선생님을 찾을 수 없습니다.' });
+        }
+
+        res.json({ success: true, teacher: teacher[0] });
+    } catch (error) {
+        logger.error('Error fetching teacher info', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 선생님 정보 수정
+router.put('/teachers/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
+    try {
+        const teacherId = req.params.id;
+        const { name, email, phone } = req.body;
+
+        if (!name || !phone) {
+            return res.json({ success: false, error: '이름과 전화번호를 입력해주세요.' });
+        }
+
+        // 다른 선생님과 중복 체크
+        const [existing] = await db.execute(
+            'SELECT id FROM admin_user_info WHERE name = ? AND phone = ? AND id != ?',
+            [name, phone, teacherId]
+        );
+
+        if (existing.length > 0) {
+            return res.json({ success: false, error: '이미 존재하는 이름과 전화번호입니다.' });
+        }
+
+        await db.execute(
+            'UPDATE admin_user_info SET name = ?, email = ?, phone = ? WHERE id = ? AND code = ?',
+            [name, email || null, phone, teacherId, 'T']
+        );
+
+        res.json({ success: true, message: '선생님 정보가 수정되었습니다.' });
+    } catch (error) {
+        logger.error('Error updating teacher', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 선생님 삭제
+router.delete('/teachers/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
+    try {
+        const teacherId = req.params.id;
+
+        // 선생님 이름 조회
+        const [teacher] = await db.execute(
+            'SELECT name FROM admin_user_info WHERE id = ? AND code = ?',
+            [teacherId, 'T']
+        );
+
+        if (teacher.length === 0) {
+            return res.json({ success: false, error: '선생님을 찾을 수 없습니다.' });
+        }
+
+        // 수강반에서 해당 선생님이 사용되고 있는지 확인
+        const [classes] = await db.execute(
+            'SELECT COUNT(*) as cnt FROM class_info WHERE (teacherOne = ? OR teacherTwo = ?) AND liveStatus = 1',
+            [teacher[0].name, teacher[0].name]
+        );
+
+        if (classes[0].cnt > 0) {
+            return res.json({
+                success: false,
+                error: `해당 선생님은 현재 ${classes[0].cnt}개의 수강반에서 활동 중입니다. 수강반을 먼저 정리해주세요.`
+            });
+        }
+
+        await db.execute(
+            'DELETE FROM admin_user_info WHERE id = ? AND code = ?',
+            [teacherId, 'T']
+        );
+
+        res.json({ success: true, message: `${teacher[0].name} 선생님이 삭제되었습니다.` });
+    } catch (error) {
+        logger.error('Error deleting teacher', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 수강반 정보 조회 (수정용) - 구체적인 경로들 이후에 배치
+router.get('/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const classId = req.params.id;
-        
+
         const [classInfo] = await db.execute(
             'SELECT * FROM class_info WHERE id = ?',
             [classId]
         );
-        
+
         if (classInfo.length === 0) {
             return res.json({ success: false, error: '수강반을 찾을 수 없습니다.' });
         }
-        
+
         const [teachers] = await db.execute(
             'SELECT name FROM admin_user_info WHERE code = ? ORDER BY name ASC',
             ['T']
         );
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             classInfo: classInfo[0],
-            teachers: teachers 
+            teachers: teachers
         });
     } catch (error) {
-        handleError(res, error, 'Error fetching class info');
+        logger.error('Error fetching class info', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // 수강반 수정 처리
-router.put('/:id', [isAuthenticated, isAdmin], async (req, res) => {
+router.put('/:id', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const classId = req.params.id;
         const { name, grade, year, day, hour, minute, teacherOne, teacherTwo } = req.body;
@@ -139,12 +286,13 @@ router.put('/:id', [isAuthenticated, isAdmin], async (req, res) => {
         
         res.json({ success: true, message: '수강반이 수정되었습니다.' });
     } catch (error) {
-        handleError(res, error, 'Error updating class');
+        logger.error('Error updating class', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 // 수강반 상태 변경 (시작/종료)
-router.post('/:id/toggle-status', [isAuthenticated, isAdmin], async (req, res) => {
+router.post('/:id/toggle-status', [isAdminAuthenticated, isAdmin], async (req, res) => {
     try {
         const classId = req.params.id;
         
@@ -187,7 +335,8 @@ router.post('/:id/toggle-status', [isAuthenticated, isAdmin], async (req, res) =
             message: newStatus === 1 ? '수강반이 시작되었습니다.' : '수강반이 종료되었습니다.' 
         });
     } catch (error) {
-        handleError(res, error, 'Error toggling class status');
+        logger.error('Error toggling class status', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

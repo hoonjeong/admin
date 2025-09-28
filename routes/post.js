@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { isAdminAuthenticated, isAdmin } = require('../middleware/adminAuth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -12,7 +12,6 @@ const { getPostsWithCommentCount, getPostWithDetails, deletePostWithFiles } = re
 const { asyncHandler, apiResponse, withTransaction } = require('../utils/asyncHandler');
 const { POST_CATEGORIES, FILE_LIMITS, PAGINATION } = require('../utils/constants');
 
-// 파일 업로드 설정
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = 'upload/posts';
@@ -37,10 +36,10 @@ const upload = multer({
 });
 
 // 글쓰기 페이지
-router.get('/write', isAuthenticated, isAdmin, (req, res, next) => {
+router.get('/write', isAdminAuthenticated, isAdmin, (req, res, next) => {
     try {
         res.render('post/write', {
-            user: req.session.user,
+            user: req.session.adminUser,
             categories: POST_CATEGORIES,
             title: '글쓰기'
         });
@@ -50,14 +49,14 @@ router.get('/write', isAuthenticated, isAdmin, (req, res, next) => {
 });
 
 // 글쓰기 처리
-router.post('/write', isAuthenticated, isAdmin, upload.array('files', 10), async (req, res, next) => {
+router.post('/write', isAdminAuthenticated, isAdmin, upload.array('files', 10), async (req, res, next) => {
     const connection = await db.getConnection();
     
     try {
         await connection.beginTransaction();
         
         const { subject, contents, category, meta_keyword, meta_description } = req.body;
-        const userId = req.session.user.id;
+        const userId = req.session.adminUser.id;
         
         // 게시글 삽입
         const postResult = await connection.query(
@@ -110,7 +109,7 @@ router.post('/write', isAuthenticated, isAdmin, upload.array('files', 10), async
 });
 
 // 글 목록
-router.get('/list', isAuthenticated, isAdmin, async (req, res, next) => {
+router.get('/list', isAdminAuthenticated, isAdmin, async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const search = req.query.search || '';
@@ -129,7 +128,7 @@ router.get('/list', isAuthenticated, isAdmin, async (req, res, next) => {
         });
         
         res.render('post/list', {
-            user: req.session.user,
+            user: req.session.adminUser,
             posts: result.posts,
             categories: POST_CATEGORIES,
             currentPage: page,
@@ -146,7 +145,7 @@ router.get('/list', isAuthenticated, isAdmin, async (req, res, next) => {
 });
 
 // 글 상세보기
-router.get('/view/:id', isAuthenticated, async (req, res, next) => {
+router.get('/view/:id', isAdminAuthenticated, async (req, res, next) => {
     try {
         const postId = req.params.id;
         const result = await getPostWithDetails(db, postId);
@@ -158,7 +157,7 @@ router.get('/view/:id', isAuthenticated, async (req, res, next) => {
         result.post.categoryName = POST_CATEGORIES[result.post.category] || result.post.category;
         
         res.render('post/view', {
-            user: req.session.user,
+            user: req.session.adminUser,
             post: result.post,
             files: result.files,
             comments: result.comments,
@@ -172,7 +171,7 @@ router.get('/view/:id', isAuthenticated, async (req, res, next) => {
 });
 
 // 글 수정 페이지
-router.get('/edit/:id', isAuthenticated, isAdmin, async (req, res, next) => {
+router.get('/edit/:id', isAdminAuthenticated, isAdmin, async (req, res, next) => {
     try {
         const postId = req.params.id;
         
@@ -195,7 +194,7 @@ router.get('/edit/:id', isAuthenticated, isAdmin, async (req, res, next) => {
         );
         
         res.render('post/edit', {
-            user: req.session.user,
+            user: req.session.adminUser,
             post: posts[0][0],
             files: files[0],
             categories: POST_CATEGORIES,
@@ -209,7 +208,7 @@ router.get('/edit/:id', isAuthenticated, isAdmin, async (req, res, next) => {
 });
 
 // 글 수정 처리
-router.post('/edit/:id', isAuthenticated, isAdmin, upload.array('files', 10), async (req, res, next) => {
+router.post('/edit/:id', isAdminAuthenticated, isAdmin, upload.array('files', 10), async (req, res, next) => {
     const connection = await db.getConnection();
     
     try {
@@ -296,7 +295,7 @@ router.post('/edit/:id', isAuthenticated, isAdmin, upload.array('files', 10), as
 });
 
 // 글 삭제
-router.delete('/delete/:id', isAuthenticated, isAdmin, async (req, res, next) => {
+router.delete('/delete/:id', isAdminAuthenticated, isAdmin, async (req, res, next) => {
     try {
         const postId = req.params.id;
         await deletePostWithFiles(db, postId);
@@ -316,7 +315,7 @@ router.delete('/delete/:id', isAuthenticated, isAdmin, async (req, res, next) =>
 });
 
 // 파일 다운로드
-router.get('/download/:fileId', isAuthenticated, async (req, res, next) => {
+router.get('/download/:fileId', isAdminAuthenticated, async (req, res, next) => {
     try {
         const fileId = req.params.fileId;
         

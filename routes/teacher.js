@@ -2,17 +2,16 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { sendSMS } = require('../utils/sms');
-const { isTeacher } = require('../middleware/auth');
+const { isTeacher } = require('../middleware/adminAuth');
+const { handleControllerError } = require('../utils/errorHandler');
+const logger = require('../utils/logger');
 
-// 문자 발송 페이지
 router.get('/sms', isTeacher, async (req, res) => {
     try {
-        // 선생님의 담당 반 목록 가져오기
-        const teacherId = req.session.user.id;
+        const teacherId = req.session.adminUser.id;
         let classes = [];
         
-        if (req.session.user.code === 'O') {
-            // 관리자는 모든 반 보기 (JOIN으로 최적화)
+        if (req.session.adminUser.code === 'O') {
             const [classRows] = await db.execute(`
                 SELECT ci.id, ci.name, COUNT(cs.id) as studentCount
                 FROM class_info ci
@@ -24,17 +23,24 @@ router.get('/sms', isTeacher, async (req, res) => {
 
             classes = classRows;
         } else {
-            // 선생님은 담당 반만 보기 (JOIN으로 최적화)
+            // 선생님은 담당 반만 보기 - 더 유연한 검색 방식 적용
+            const teacherName = req.session.adminUser.name;
+
+
+            // 선생님 이름을 포함하는 클래스를 찾기 (LIKE 사용으로 더 유연하게)
             const [classRows] = await db.execute(`
                 SELECT ci.id, ci.name, COUNT(cs.id) as studentCount
                 FROM class_info ci
                 LEFT JOIN class_status cs ON ci.id = cs.class_id AND cs.status = 1
                 WHERE ci.liveStatus = 1
-                AND (ci.teacherOne = ? OR ci.teacherTwo = ?)
+                AND (ci.teacherOne LIKE ? OR ci.teacherTwo LIKE ?
+                     OR ci.teacherOne = ? OR ci.teacherTwo = ?)
                 GROUP BY ci.id, ci.name
                 ORDER BY ci.name
-            `, [req.session.user.name, req.session.user.name]);
+            `, [`%${teacherName}%`, `%${teacherName}%`, teacherName, teacherName]);
 
+
+            // 클래스가 없으면 빈 배열이지만 에러는 아님
             classes = classRows;
         }
         
@@ -46,12 +52,11 @@ router.get('/sms', isTeacher, async (req, res) => {
         const memo = memoRows.length > 0 ? memoRows[0].memo : '';
         
         res.render('teacher/sms', { 
-            user: req.session.user,
+            user: req.session.adminUser,
             classes: classes,
             memo: memo
         });
     } catch (error) {
-        const { handleControllerError } = require('../utils/errorHandler');
         handleControllerError(res, error, 'SMS page error');
     }
 });
@@ -72,7 +77,7 @@ router.get('/api/class-students/:classId', isTeacher, async (req, res) => {
         
         res.json({ success: true, students: students });
     } catch (error) {
-        console.error('Get students error:', error);
+        logger.error('Get students error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -101,7 +106,7 @@ router.post('/api/send-sms', isTeacher, async (req, res) => {
                     message: '발송 성공'
                 });
             } catch (error) {
-                console.error(`SMS send error for ${phone}:`, error);
+                logger.error(`SMS send error for ${phone}`, error);
                 results.push({
                     phone: phone,
                     success: false,
@@ -117,7 +122,7 @@ router.post('/api/send-sms', isTeacher, async (req, res) => {
             totalFailed: results.filter(r => !r.success).length
         });
     } catch (error) {
-        console.error('SMS send error:', error);
+        logger.error('SMS send error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -154,7 +159,7 @@ router.get('/api/recent-message/:phone/:name', isTeacher, async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Get recent message error:', error);
+        logger.error('Get recent message error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -163,7 +168,7 @@ router.get('/api/recent-message/:phone/:name', isTeacher, async (req, res) => {
 router.post('/api/save-memo', isTeacher, async (req, res) => {
     try {
         const { memo } = req.body;
-        const teacherId = req.session.user.id;
+        const teacherId = req.session.adminUser.id;
         
         // 기존 메모가 있는지 확인
         const [existing] = await db.execute(
@@ -187,7 +192,7 @@ router.post('/api/save-memo', isTeacher, async (req, res) => {
         
         res.json({ success: true });
     } catch (error) {
-        console.error('Save memo error:', error);
+        logger.error('Save memo error', error);
         res.json({ success: false, error: error.message });
     }
 });
@@ -195,14 +200,21 @@ router.post('/api/save-memo', isTeacher, async (req, res) => {
 // 내 강의 목록 조회
 router.get('/lectures', isTeacher, async (req, res) => {
     try {
-        const teacherName = req.session.user.name;
+        const teacherName = req.session.adminUser.name;
         
-        // 강의 목록 조회
+        // 강의 목록 조회 - class_status 조건 추가
         const [lectures] = await db.execute(`
-            SELECT id, subject, teacher, lecture_date 
-            FROM lecture 
-            WHERE teacher = ? 
-            ORDER BY id DESC
+            SELECT l.id, l.subject, l.teacher, l.lecture_date
+            FROM lecture l
+            WHERE l.teacher = ?
+            AND EXISTS (
+                SELECT 1 FROM class_status cs
+                WHERE cs.class_id = l.class_id
+                AND cs.status = 1
+                AND cs.start_time <= l.lecture_date
+                AND (cs.end_time IS NULL OR cs.end_time >= l.lecture_date)
+            )
+            ORDER BY l.id DESC
         `, [teacherName]);
         
         // 각 강의에 대한 질문 수와 첨부파일 수 조회
@@ -215,7 +227,7 @@ router.get('/lectures', isTeacher, async (req, res) => {
                 );
                 lecture.questionCount = questionCount[0].cnt;
             } catch (error) {
-                console.error('Error counting questions for lecture:', lecture.id, error);
+                logger.error('Error counting questions for lecture', { lectureId: lecture.id, error });
                 lecture.questionCount = 0;
             }
             
@@ -227,17 +239,17 @@ router.get('/lectures', isTeacher, async (req, res) => {
                 );
                 lecture.hasFile = fileCount[0].cnt > 0;
             } catch (error) {
-                console.error('Error counting files for lecture:', lecture.id, error);
+                logger.error('Error counting files for lecture', { lectureId: lecture.id, error });
                 lecture.hasFile = false;
             }
         }
         
         res.render('teacher/lectures', {
-            user: req.session.user,
+            user: req.session.adminUser,
             lectures: lectures
         });
     } catch (error) {
-        console.error('Lectures list error:', error);
+        logger.error('Lectures list error', error);
         res.status(500).render('error', { error: error });
     }
 });
@@ -246,7 +258,7 @@ router.get('/lectures', isTeacher, async (req, res) => {
 router.get('/lecture/:id', isTeacher, async (req, res) => {
     try {
         const lectureId = req.params.id;
-        const teacherName = req.session.user.name;
+        const teacherName = req.session.adminUser.name;
         
         // 강의 정보 조회
         const [lectureInfo] = await db.execute(`
@@ -269,7 +281,7 @@ router.get('/lecture/:id', isTeacher, async (req, res) => {
             `, [lectureId]);
             files = fileResults;
         } catch (error) {
-            console.error('Error fetching files:', error);
+            logger.error('Error fetching files', error);
         }
         
         // 질문 리스트 조회
@@ -286,18 +298,153 @@ router.get('/lecture/:id', isTeacher, async (req, res) => {
             `, [lectureId]);
             questions = questionResults;
         } catch (error) {
-            console.error('Error fetching questions:', error);
+            logger.error('Error fetching questions', error);
         }
         
         res.render('teacher/lecture-detail', {
-            user: req.session.user,
+            user: req.session.adminUser,
             lecture: lectureInfo[0],
             files: files,
             questions: questions
         });
     } catch (error) {
-        console.error('Lecture detail error:', error);
+        logger.error('Lecture detail error', error);
         res.status(500).render('error', { error: error });
+    }
+});
+
+// 내정보 조회 페이지
+router.get('/profile', isTeacher, async (req, res) => {
+    try {
+        const teacherId = req.session.adminUser.id;
+
+        // 선생님 정보 조회
+        const [teachers] = await db.execute(
+            'SELECT id, email, name, phone FROM admin_user_info WHERE id = ?',
+            [teacherId]
+        );
+
+        if (teachers.length === 0) {
+            return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+        }
+
+        const teacher = teachers[0];
+
+        res.render('teacher/profile', {
+            title: '내정보 - 이든배움국어학원',
+            teacher: teacher,
+            adminUser: req.session.adminUser,
+            user: req.session.adminUser, // navbar에서 사용
+            error: req.query.error || null,
+            success: req.query.success || null
+        });
+
+    } catch (error) {
+        logger.error('Teacher profile view error', error);
+        res.status(500).send('내정보 조회 중 오류가 발생했습니다.');
+    }
+});
+
+// 내정보 수정 페이지
+router.get('/profile/edit', isTeacher, async (req, res) => {
+    try {
+        const teacherId = req.session.adminUser.id;
+
+        // 선생님 정보 조회
+        const [teachers] = await db.execute(
+            'SELECT id, email, name, phone FROM admin_user_info WHERE id = ?',
+            [teacherId]
+        );
+
+        if (teachers.length === 0) {
+            return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+        }
+
+        const teacher = teachers[0];
+
+        res.render('teacher/profile-edit', {
+            title: '내정보 수정 - 이든배움국어학원',
+            teacher: teacher,
+            adminUser: req.session.adminUser,
+            user: req.session.adminUser, // navbar에서 사용
+            error: req.query.error || null,
+            success: req.query.success || null
+        });
+
+    } catch (error) {
+        logger.error('Teacher profile edit view error', error);
+        res.status(500).send('내정보 수정 페이지 로드 중 오류가 발생했습니다.');
+    }
+});
+
+// 내정보 수정 처리
+router.post('/profile/edit', isTeacher, async (req, res) => {
+    try {
+        const teacherId = req.session.adminUser.id;
+        const { email, phone, currentPassword, newPassword, confirmPassword } = req.body;
+
+        // 필수 입력값 확인
+        if (!email || !phone) {
+            return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('이메일과 전화번호는 필수입니다.'));
+        }
+
+        // 이메일 중복 확인 (본인 제외)
+        const [existingEmail] = await db.execute(
+            'SELECT id FROM admin_user_info WHERE email = ? AND id != ?',
+            [email, teacherId]
+        );
+
+        if (existingEmail.length > 0) {
+            return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('이미 사용 중인 이메일입니다.'));
+        }
+
+        // 비밀번호 변경 처리
+        let updateQuery = 'UPDATE admin_user_info SET email = ?, phone = ? WHERE id = ?';
+        let updateParams = [email, phone, teacherId];
+
+        if (newPassword) {
+            // 비밀번호 변경 시 현재 비밀번호 확인
+            if (!currentPassword) {
+                return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('현재 비밀번호를 입력해주세요.'));
+            }
+
+            if (newPassword !== confirmPassword) {
+                return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('새 비밀번호가 일치하지 않습니다.'));
+            }
+
+            if (newPassword.length < 6) {
+                return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('비밀번호는 6자리 이상이어야 합니다.'));
+            }
+
+            // 현재 비밀번호 확인
+            const hashedCurrentPassword = crypto.createHash('sha1').update(currentPassword).digest('hex');
+            const [currentUser] = await db.execute(
+                'SELECT id FROM admin_user_info WHERE id = ? AND pw = ?',
+                [teacherId, hashedCurrentPassword]
+            );
+
+            if (currentUser.length === 0) {
+                return res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('현재 비밀번호가 일치하지 않습니다.'));
+            }
+
+            // 새 비밀번호 해시화
+            const hashedNewPassword = crypto.createHash('sha1').update(newPassword).digest('hex');
+            updateQuery = 'UPDATE admin_user_info SET email = ?, phone = ?, pw = ? WHERE id = ?';
+            updateParams = [email, phone, hashedNewPassword, teacherId];
+        }
+
+        // 정보 업데이트
+        await db.execute(updateQuery, updateParams);
+
+        // 세션 정보 업데이트
+        req.session.adminUser.email = email;
+        req.session.adminUser.phone = phone;
+
+        res.redirect('/teacher/profile?success=' + encodeURIComponent('정보가 성공적으로 수정되었습니다.'));
+
+    } catch (error) {
+        logger.error('Teacher profile update error', error);
+        res.redirect('/teacher/profile/edit?error=' + encodeURIComponent('정보 수정 중 오류가 발생했습니다.'));
     }
 });
 

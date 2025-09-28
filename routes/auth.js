@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const db = require('../config/database');
+const logger = require('../utils/logger');
 
 router.get('/login', (req, res) => {
     res.render('auth/login', { 
@@ -24,8 +25,8 @@ router.post('/login', async (req, res) => {
         
         if (rows.length > 0) {
             const user = rows[0];
-            
-            req.session.user = {
+
+            req.session.adminUser = {
                 id: user.id,
                 email: user.email,
                 name: user.name,
@@ -46,7 +47,7 @@ router.post('/login', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Login error:', error);
+        logger.error('Login error', error);
         res.render('auth/login', { 
             error: '로그인 처리 중 오류가 발생했습니다.' 
         });
@@ -82,7 +83,7 @@ router.post('/register', async (req, res) => {
         
         res.redirect('/auth/login?success=' + encodeURIComponent('회원가입이 완료되었습니다. 로그인해주세요.'));
     } catch (error) {
-        console.error('Register error:', error);
+        logger.error('Register error', error);
         res.render('auth/register', { 
             error: '회원가입 처리 중 오류가 발생했습니다.' 
         });
@@ -117,7 +118,7 @@ router.post('/find-email', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Find email error:', error);
+        logger.error('Find email error', error);
         res.render('auth/find-email', { 
             error: '이메일 찾기 처리 중 오류가 발생했습니다.', 
             email: null 
@@ -189,7 +190,7 @@ router.post('/find-password', async (req, res) => {
             success: '임시 비밀번호가 이메일로 발송되었습니다. 이메일을 확인해주세요.' 
         });
     } catch (error) {
-        console.error('Find password error:', error);
+        logger.error('Find password error', error);
         res.render('auth/find-password', { 
             error: '비밀번호 찾기 처리 중 오류가 발생했습니다.', 
             success: null 
@@ -198,9 +199,12 @@ router.post('/find-password', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
+    if (req.session.adminUser) {
+        delete req.session.adminUser;
+    }
+    req.session.save((err) => {
         if (err) {
-            console.error('Logout error:', err);
+            logger.error('Logout error', err);
         }
         res.redirect('/auth/login');
     });

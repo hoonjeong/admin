@@ -4,18 +4,17 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const db = require('../config/database');
+const logger = require('../utils/logger');
 
-// Multer 설정 - 메모리 스토리지 사용 (DB에 직접 저장)
 const storage = multer.memoryStorage();
 
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 50 * 1024 * 1024, // 50MB 제한
+        fileSize: 50 * 1024 * 1024,
         files: 1
     },
     fileFilter: function (req, file, cb) {
-        // 허용된 MIME 타입
         const allowedMimeTypes = [
             'image/jpeg',
             'image/jpg', 
@@ -44,7 +43,7 @@ const upload = multer({
 
 // 미들웨어: 관리자 권한 체크
 const checkAdminAuth = (req, res, next) => {
-    if (!req.session.user || req.session.user.code !== 'O') {
+    if (!req.session.adminUser || req.session.adminUser.code !== 'O') {
         return res.redirect('/auth/login');
     }
     next();
@@ -52,7 +51,7 @@ const checkAdminAuth = (req, res, next) => {
 
 // 학교별 기출 추가 페이지
 router.get('/add', checkAdminAuth, (req, res) => {
-    res.render('exam/add', { user: req.session.user });
+    res.render('exam/add', { user: req.session.adminUser });
 });
 
 // 기출문제 목록 페이지
@@ -61,10 +60,10 @@ router.get('/list', checkAdminAuth, async (req, res) => {
         const [exams] = await db.execute(
             'SELECT id, file_name, company, subject, school, year, grade, term, test, insert_time FROM ED_TYPE_TB ORDER BY insert_time DESC'
         );
-        res.render('exam/list', { user: req.session.user, exams });
+        res.render('exam/list', { user: req.session.adminUser, exams });
     } catch (error) {
-        console.error('기출문제 목록 조회 오류:', error);
-        res.render('exam/list', { user: req.session.user, exams: [], error: '목록을 불러오는 중 오류가 발생했습니다.' });
+        logger.error('기출문제 목록 조회 오류', error);
+        res.render('exam/list', { user: req.session.adminUser, exams: [], error: '목록을 불러오는 중 오류가 발생했습니다.' });
     }
 });
 
@@ -170,7 +169,7 @@ router.get('/api/files', checkAdminAuth, async (req, res) => {
         const fileNames = files.map(f => f.file_name);
         res.json({ files: fileNames });
     } catch (error) {
-        console.error('파일 목록 조회 오류:', error);
+        logger.error('파일 목록 조회 오류', error);
         res.json({ files: [] });
     }
 });
@@ -180,7 +179,7 @@ router.post('/api/upload', checkAdminAuth, (req, res, next) => {
     upload.single('examFile')(req, res, async (err) => {
         // Multer 에러 처리
         if (err) {
-            console.error('Upload error:', err);
+            logger.error('Upload error', err);
             if (err.code === 'LIMIT_FILE_SIZE') {
                 return res.status(400).json({ 
                     success: false, 
@@ -256,7 +255,7 @@ router.post('/api/upload', checkAdminAuth, (req, res, next) => {
             });
 
         } catch (error) {
-            console.error('기출문제 저장 오류:', error);
+            logger.error('기출문제 저장 오류', error);
             res.status(500).json({ 
                 success: false, 
                 error: '데이터베이스 저장 중 오류가 발생했습니다.' 
@@ -282,7 +281,7 @@ router.get('/download/:id', checkAdminAuth, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(exam.file_name)}"`);
         res.send(exam.content);
     } catch (error) {
-        console.error('파일 다운로드 오류:', error);
+        logger.error('파일 다운로드 오류', error);
         res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
     }
 });
@@ -307,7 +306,7 @@ router.delete('/api/delete/:id', checkAdminAuth, async (req, res) => {
             message: '기출문제가 삭제되었습니다.'
         });
     } catch (error) {
-        console.error('기출문제 삭제 오류:', error);
+        logger.error('기출문제 삭제 오류', error);
         res.status(500).json({
             success: false,
             error: '삭제 중 오류가 발생했습니다.'

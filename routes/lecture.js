@@ -3,10 +3,11 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { isAuthenticated } = require('../middleware/auth');
+const { isAdminAuthenticated } = require('../middleware/adminAuth');
 const db = require('../config/database');
+const logger = require('../utils/logger');
 
-router.use(isAuthenticated);
+router.use(isAdminAuthenticated);
 
 const uploadDir = path.join(__dirname, '..', 'upload');
 if (!fs.existsSync(uploadDir)) {
@@ -41,13 +42,14 @@ router.get('/add', async (req, res) => {
             'SELECT id, name FROM class_info WHERE liveStatus = 1 ORDER BY name'
         );
         
-        res.render('lecture/add', { 
-            teachers, 
+        res.render('lecture/add', {
+            teachers,
             classes,
-            pageTitle: '강의 추가'
+            pageTitle: '강의 추가',
+            user: req.session.adminUser
         });
     } catch (error) {
-        console.error('Error loading lecture add page:', error);
+        logger.error('Error loading lecture add page', error);
         res.status(500).render('error', { error });
     }
 });
@@ -94,7 +96,7 @@ router.post('/add', upload.array('files', 10), async (req, res) => {
         
     } catch (error) {
         await connection.rollback();
-        console.error('Error adding lecture:', error);
+        logger.error('Error adding lecture', error);
         res.status(500).render('error', { error });
     } finally {
         connection.release();
@@ -105,41 +107,45 @@ router.get('/list', async (req, res) => {
     try {
         const { search, searchType } = req.query;
         let query = `
-            SELECT l.id, l.subject, l.teacher, 
-                   IFNULL(i.name, '특강') as class_name, 
-                   l.lecture_date,
-                   (SELECT COUNT(*) FROM question q WHERE q.lecture_id = l.id) as questionCount,
-                   (SELECT COUNT(*) FROM file_status fs WHERE fs.lecture_id = l.id) as fileCount
-            FROM lecture l 
+            SELECT l.id, l.subject, l.teacher,
+                   IF(i.name IS NULL, "특강", i.name) AS class_name,
+                   l.code, l.lecture_date
+            FROM lecture l
             LEFT JOIN class_info i ON l.class_id = i.id
         `;
-        
+
         const params = [];
+        let whereAdded = false;
+
         if (search) {
             if (searchType === 'subject') {
                 query += ' WHERE l.subject LIKE ?';
                 params.push(`%${search}%`);
+                whereAdded = true;
             } else if (searchType === 'class') {
                 query += ' WHERE i.name LIKE ?';
                 params.push(`%${search}%`);
+                whereAdded = true;
             } else if (searchType === 'teacher') {
                 query += ' WHERE l.teacher LIKE ?';
                 params.push(`%${search}%`);
+                whereAdded = true;
             }
         }
-        
+
         query += ' ORDER BY l.id DESC LIMIT 300';
         
         const [lectures] = await db.execute(query, params);
         
-        res.render('lecture/list', { 
+        res.render('lecture/list', {
             lectures,
             search,
             searchType,
-            pageTitle: '강의 관리'
+            pageTitle: '강의 관리',
+            user: req.session.adminUser
         });
     } catch (error) {
-        console.error('Error loading lecture list:', error);
+        logger.error('Error loading lecture list', error);
         res.status(500).render('error', { error });
     }
 });
@@ -176,10 +182,11 @@ router.get('/view/:id', async (req, res) => {
             lecture: lectureData[0],
             files,
             questions,
-            pageTitle: lectureData[0].subject
+            pageTitle: lectureData[0].subject,
+            user: req.session.adminUser
         });
     } catch (error) {
-        console.error('Error viewing lecture:', error);
+        logger.error('Error viewing lecture', error);
         res.status(500).render('error', { error });
     }
 });
@@ -218,10 +225,11 @@ router.get('/edit/:id', async (req, res) => {
             teachers,
             classes,
             files,
-            pageTitle: '강의 수정'
+            pageTitle: '강의 수정',
+            user: req.session.adminUser
         });
     } catch (error) {
-        console.error('Error loading lecture edit page:', error);
+        logger.error('Error loading lecture edit page', error);
         res.status(500).render('error', { error });
     }
 });
@@ -275,7 +283,7 @@ router.post('/edit/:id', upload.array('files', 10), async (req, res) => {
         
     } catch (error) {
         await connection.rollback();
-        console.error('Error updating lecture:', error);
+        logger.error('Error updating lecture', error);
         res.status(500).render('error', { error });
     } finally {
         connection.release();
@@ -322,7 +330,7 @@ router.delete('/delete/:id', async (req, res) => {
         
     } catch (error) {
         await connection.rollback();
-        console.error('Error deleting lecture:', error);
+        logger.error('Error deleting lecture', error);
         res.status(500).json({ success: false, error: error.message });
     } finally {
         connection.release();
@@ -350,7 +358,7 @@ router.get('/download/:fileId', async (req, res) => {
         
         res.download(filePath, fileData[0].filename);
     } catch (error) {
-        console.error('Error downloading file:', error);
+        logger.error('Error downloading file', error);
         res.status(500).render('error', { error });
     }
 });

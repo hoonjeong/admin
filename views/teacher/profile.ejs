@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <%- include('../partials/styles') %>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/navbar') %>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">내정보</h1>
+                </div>
+
+                <% if (success) { %>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <% if (error) { %>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">개인정보</h5>
+                                <a href="/teacher/profile/edit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-pencil"></i> 수정
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-sm-3">
+                                        <strong>이름</strong>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <%= teacher.name %>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-sm-3">
+                                        <strong>이메일</strong>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <%= teacher.email %>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-sm-3">
+                                        <strong>전화번호</strong>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <%= teacher.phone || '-' %>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-sm-3">
+                                        <strong>권한</strong>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <% if (adminUser.code === 'O') { %>
+                                            <span class="badge bg-success">관리자</span>
+                                        <% } else if (adminUser.code === 'T') { %>
+                                            <span class="badge bg-primary">선생님</span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">일반</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">안전 설정</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="/teacher/profile/edit" class="btn btn-outline-primary">
+                                        <i class="bi bi-key"></i> 비밀번호 변경
+                                    </a>
+                                    <a href="/teacher/profile/edit" class="btn btn-outline-secondary">
+                                        <i class="bi bi-envelope"></i> 이메일 변경
+                                    </a>
+                                    <a href="/teacher/profile/edit" class="btn btn-outline-info">
+                                        <i class="bi bi-telephone"></i> 전화번호 변경
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">계정 정보</h5>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">
+                                    개인정보 수정 시 이메일 중복 확인이 이루어집니다.<br>
+                                    비밀번호는 6자리 이상으로 설정해주세요.<br>
+                                    정보 변경 후 다시 로그인이 필요할 수 있습니다.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+</body>
+</html>

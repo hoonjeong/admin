@@ -2,7 +2,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../config/database');
 const { sendVerificationSMS, saveVerificationCode, verifyCode } = require('../utils/sms');
-const { initSMSTables } = require('../utils/dbInit');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -11,7 +11,8 @@ router.get('/register', (req, res) => {
     res.render('user/register', {
         title: '회원가입 - 이든배움국어학원',
         error: null,
-        success: null
+        success: null,
+        userInfo: req.session.userInfo || null
     });
 });
 
@@ -19,16 +20,14 @@ router.get('/register', (req, res) => {
 router.get('/login', (req, res) => {
     res.render('user/login', {
         title: '로그인 - 이든배움국어학원',
-        error: null
+        error: null,
+        redirect: req.query.redirect || null
     });
 });
 
 // 전화번호 인증 요청
 router.post('/verify-phone', async (req, res) => {
     try {
-        // SMS 테이블 초기화
-        await initSMSTables();
-
         const { phone, type } = req.body;
 
         if (!phone || !type) {
@@ -42,8 +41,13 @@ router.post('/verify-phone', async (req, res) => {
             return res.status(500).json({ error: 'SMS 발송에 실패했습니다. 다시 시도해주세요.' });
         }
 
-        // 데이터베이스에 인증번호 저장 (3분 유효)
-        await saveVerificationCode(phone, result.verificationCode, 'signup', 3);
+        // 데이터베이스에 인증번호 저장 시도 (실패해도 SMS는 발송됨)
+        try {
+            await saveVerificationCode(phone, result.verificationCode, 'signup', 3);
+        } catch (dbError) {
+            logger.error('인증번호 DB 저장 실패 (SMS는 발송됨):', dbError);
+            // DB 저장 실패해도 SMS는 발송되었으므로 계속 진행
+        }
 
         // 세션에도 저장 (기존 로직 호환성)
         req.session.verification = {
@@ -58,7 +62,7 @@ router.post('/verify-phone', async (req, res) => {
             message: '인증번호가 발송되었습니다. 3분 내에 입력해주세요.'
         });
     } catch (error) {
-        console.error('SMS 발송 실패:', error);
+        logger.error('SMS 발송 실패', error);
         res.status(500).json({ error: 'SMS 발송에 실패했습니다. 다시 시도해주세요.' });
     }
 });
@@ -72,8 +76,24 @@ router.post('/verify-code', async (req, res) => {
             return res.status(400).json({ error: '필수 정보가 누락되었습니다.' });
         }
 
-        // 데이터베이스에서 인증번호 확인
-        const isValid = await verifyCode(phone, code, 'signup');
+        // 데이터베이스에서 인증번호 확인 시도
+        let isValid = false;
+        try {
+            isValid = await verifyCode(phone, code, 'signup');
+        } catch (dbError) {
+            logger.error('DB 인증번호 확인 실패, 세션 확인으로 대체:', dbError);
+        }
+
+        // DB 확인이 실패한 경우 세션에서 확인
+        if (!isValid && req.session.verification) {
+            const sessionVerification = req.session.verification;
+            if (sessionVerification.phone === phone &&
+                sessionVerification.code === code &&
+                sessionVerification.expires > Date.now()) {
+                isValid = true;
+                logger.info('세션 기반 인증번호 확인 성공:', phone);
+            }
+        }
 
         if (!isValid) {
             return res.status(400).json({ error: '인증번호가 일치하지 않거나 만료되었습니다.' });
@@ -139,7 +159,7 @@ router.post('/verify-code', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('인증번호 확인 오류:', error);
+        logger.error('인증번호 확인 오류', error);
         res.status(500).json({ error: '인증 처리 중 오류가 발생했습니다.' });
     }
 });
@@ -177,7 +197,7 @@ router.post('/check-email', async (req, res) => {
 
         res.json({ available: true, message: '사용 가능한 이메일입니다.' });
     } catch (error) {
-        console.error('이메일 확인 오류:', error);
+        logger.error('이메일 확인 오류', error);
         res.status(500).json({ error: '이메일 확인 중 오류가 발생했습니다.' });
     }
 });
@@ -235,7 +255,7 @@ router.post('/signup', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('회원가입 오류:', error);
+        logger.error('회원가입 오류', error);
         res.status(500).json({ error: '회원가입 중 오류가 발생했습니다.' });
     }
 });
@@ -273,21 +293,82 @@ router.post('/login', async (req, res) => {
             pphone: user.pphone
         };
 
+        // redirect 파라미터가 있으면 해당 URL로, 없으면 홈으로 이동
+        const redirectUrl = req.body.redirect || '/';
+
         res.json({
             success: true,
             message: '로그인되었습니다.',
-            redirectUrl: '/'
+            redirectUrl: redirectUrl
         });
 
     } catch (error) {
-        console.error('로그인 오류:', error);
+        logger.error('로그인 오류', error);
         res.status(500).json({ error: '로그인 중 오류가 발생했습니다.' });
+    }
+});
+
+// 내정보 보기 페이지
+router.get('/profile', async (req, res) => {
+    try {
+        // 로그인 체크
+        if (!req.session.userInfo) {
+            return res.redirect('/user/login?redirect=' + encodeURIComponent('/user/profile'));
+        }
+
+        const userInfo = req.session.userInfo;
+
+        // user_info 테이블에서 사용자 정보 가져오기
+        const [userRows] = await db.execute(
+            'SELECT id, email, student_id FROM user_info WHERE id = ?',
+            [userInfo.id]
+        );
+
+        if (userRows.length === 0 || !userRows[0].student_id) {
+            return res.status(404).send('사용자 정보를 찾을 수 없습니다.');
+        }
+
+        const user = userRows[0];
+
+        // student 테이블에서 학생 정보 가져오기
+        const [studentRows] = await db.execute(
+            'SELECT name, school, grade, year, pphone, sphone FROM student WHERE id = ?',
+            [user.student_id]
+        );
+
+        if (studentRows.length === 0) {
+            return res.status(404).send('학생 정보를 찾을 수 없습니다.');
+        }
+
+        const student = studentRows[0];
+
+        res.render('user/profile', {
+            title: '내정보 - 이든배움국어학원',
+            user: user,
+            student: student,
+            userInfo: userInfo
+        });
+
+    } catch (error) {
+        logger.error('Profile error', error);
+        res.status(500).send('내정보 조회 중 오류가 발생했습니다.');
     }
 });
 
 // 로그아웃
 router.post('/logout', (req, res) => {
-    req.session.destroy((err) => {
+    // 홈페이지 사용자 세션만 삭제 (관리자 세션은 유지)
+    if (req.session.userInfo) {
+        delete req.session.userInfo;
+    }
+    if (req.session.studentInfo) {
+        delete req.session.studentInfo;
+    }
+    if (req.session.verification) {
+        delete req.session.verification;
+    }
+
+    req.session.save((err) => {
         if (err) {
             return res.status(500).json({ error: '로그아웃 중 오류가 발생했습니다.' });
         }

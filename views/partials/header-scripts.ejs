@@ -1,0 +1,68 @@
+<script>
+    // 드롭다운 메뉴 기능
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdown = document.getElementById('userDropdown');
+        const dropdownMenu = document.getElementById('userDropdownMenu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                dropdownMenu.classList.toggle('show');
+            });
+
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                }
+            });
+        }
+    });
+
+    // 로그아웃 함수
+    async function logout() {
+        if (confirm('로그아웃하시겠습니까?')) {
+            try {
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('로그아웃되었습니다.');
+                    window.location.href = data.redirectUrl;
+                } else {
+                    alert('로그아웃 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('로그아웃 중 오류가 발생했습니다.');
+            }
+        }
+    }
+
+    // 현재 페이지에 따른 메뉴 활성화
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            if (item.getAttribute('href') === currentPath) {
+                item.classList.add('active');
+            }
+        });
+
+        // 특별한 경우들 처리
+        if (currentPath.startsWith('/board')) {
+            document.querySelector('.nav-item[href="/board"]')?.classList.add('active');
+        } else if (currentPath.startsWith('/video')) {
+            document.querySelector('.nav-item[href="/video"]')?.classList.add('active');
+        } else if (currentPath === '/') {
+            document.querySelector('.nav-item[href="/"]')?.classList.add('active');
+        }
+    });
+</script>

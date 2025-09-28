@@ -278,7 +278,7 @@
                         embedUrl = lecture.url;
                     }
                     %>
-                    <iframe src="<%= embedUrl %>" allowfullscreen></iframe>
+                    <iframe src="<%= lecture.url.replace(/&amp;/g, '&') %>" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
                 </div>
             </div>
         <% } %>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 - 이든배움국어학원</title>
+    <%- include('../partials/header-styles') %>
+    <style>
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .category-list {
+            list-style: none;
+        }
+
+        .category-item {
+            margin-bottom: 8px;
+        }
+
+        .category-link {
+            display: block;
+            padding: 12px 15px;
+            color: #555;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .category-link:hover {
+            background: #f8f9fa;
+            color: #007bff;
+        }
+
+        .category-link.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+
+        .board-title {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .write-btn {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .write-btn:hover {
+            background: #0056b3;
+        }
+
+        .post-list {
+            list-style: none;
+        }
+
+        .post-item {
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+            transition: background 0.3s ease;
+        }
+
+        .post-item:hover {
+            background: #f8f9fa;
+            padding-left: 10px;
+            padding-right: 10px;
+            border-radius: 5px;
+        }
+
+        .post-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            text-decoration: none;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .post-title:hover {
+            color: #007bff;
+        }
+
+        .comment-count {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .post-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .post-preview {
+            font-size: 0.9rem;
+            color: #777;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 5px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #555;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .page-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .page-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .sidebar {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .nav {
+                padding: 10px;
+            }
+
+            .nav-item {
+                margin: 5px 10px;
+                font-size: 14px;
+            }
+
+            .board-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h3>게시판</h3>
+            <ul class="category-list">
+                <li class="category-item">
+                    <a href="/board" class="category-link <%= currentCategory === 'all' ? 'active' : '' %>">전체보기</a>
+                </li>
+                <li class="category-item">
+                    <a href="/board?category=N" class="category-link <%= currentCategory === 'N' ? 'active' : '' %>">공지사항</a>
+                </li>
+                <li class="category-item">
+                    <a href="/board?category=S" class="category-link <%= currentCategory === 'S' ? 'active' : '' %>">이든이야기</a>
+                </li>
+                <li class="category-item">
+                    <a href="/board?category=C" class="category-link <%= currentCategory === 'C' ? 'active' : '' %>">입시정보</a>
+                </li>
+                <li class="category-item">
+                    <a href="/board?category=D" class="category-link <%= currentCategory === 'D' ? 'active' : '' %>">입시자료</a>
+                </li>
+                <li class="category-item">
+                    <a href="/board?category=R" class="category-link <%= currentCategory === 'R' ? 'active' : '' %>">수강후기</a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="board-header">
+                <h1 class="board-title"><%= boardTitle %></h1>
+                <% if (typeof userInfo !== 'undefined' && userInfo) { %>
+                    <a href="/board/write<%= currentCategory !== 'all' ? '?category=' + currentCategory : '' %>" class="write-btn">글쓰기</a>
+                <% } %>
+            </div>
+
+            <% if (posts && posts.length > 0) { %>
+                <ul class="post-list">
+                    <% posts.forEach(post => { %>
+                        <li class="post-item">
+                            <a href="/board/<%= post.id %>" class="post-title">
+                                <%= post.subject %>
+                                <% if (post.comment_count > 0) { %>
+                                    <span class="comment-count">(<%= post.comment_count %>)</span>
+                                <% } %>
+                            </a>
+                            <div class="post-meta">
+                                작성자: <%= post.author_name || '관리자' %> | 작성일: <%= new Date(post.insert_time).toLocaleDateString('ko-KR') %> | 조회수: <%= post.read_count %>
+                            </div>
+                            <div class="post-preview">
+                                <%= post.contents.replace(/<[^>]*>/g, '').substring(0, 150) %>...
+                            </div>
+                        </li>
+                    <% }) %>
+                </ul>
+
+                <% if (totalPages > 1) { %>
+                    <div class="pagination">
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <a href="/board?page=<%= i %><%= currentCategory !== 'all' ? '&category=' + currentCategory : '' %>"
+                               class="page-btn <%= currentPage == i ? 'active' : '' %>"><%= i %></a>
+                        <% } %>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <div style="text-align: center; padding: 50px; color: #666;">
+                    게시글이 없습니다.
+                </div>
+            <% } %>
+        </main>
+    </div>
+
+    <%- include('../partials/header-scripts') %>
+</body>
+</html>

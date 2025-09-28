@@ -19,13 +19,25 @@ const smsRoutes = require('./routes/sms');
 const aiRoutes = require('./routes/ai');
 const examRoutes = require('./routes/exam');
 const userRoutes = require('./routes/user');
+const boardRoutes = require('./routes/board');
+const videoRoutes = require('./routes/video');
 
 const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+// 개발 환경에서 EJS 캐시 비활성화
+if (process.env.NODE_ENV !== 'production') {
+    app.set('view cache', false);
+}
+
+// 개발 환경에서 정적 파일 캐시 비활성화
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: false,
+    lastModified: false,
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : 0
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -45,9 +57,19 @@ app.use(session({
         secure: false,
         httpOnly: true,
         sameSite: 'strict',
-        maxAge: null // 명시적으로 null 설정 - 세션 쿠키
+        maxAge: null
     }
 }));
+
+// 개발 환경에서 캐시 비활성화 헤더 추가
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        next();
+    });
+}
 
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
@@ -78,6 +100,8 @@ app.use('/sms', smsRoutes);
 app.use('/ai', aiRoutes);
 app.use('/exam', examRoutes);
 app.use('/user', userRoutes);
+app.use('/board', boardRoutes);
+app.use('/video', videoRoutes);
 
 app.use((req, res) => {
     res.status(404).render('404');
@@ -86,6 +110,7 @@ app.use((req, res) => {
 app.use(globalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     logger.info(`Server is running on port ${PORT}`);
 });

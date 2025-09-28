@@ -248,7 +248,7 @@
         </div>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<%= process.env.BOOTSTRAP_JS_URL || 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' %>"></script>
     <script>
         // 블로그 생성
         async function generateBlog() {
