@@ -1,7 +1,7 @@
 const express = require('express');
-const crypto = require('crypto');
 const db = require('../config/database');
 const { sendVerificationSMS, saveVerificationCode, verifyCode } = require('../utils/sms');
+const { hashPassword } = require('../utils/auth');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -18,9 +18,15 @@ router.get('/register', (req, res) => {
 
 // 로그인 페이지
 router.get('/login', (req, res) => {
+    let message = null;
+    if (req.query.message === '퇴원처리로인한로그아웃') {
+        message = '퇴원 처리되어 로그아웃되었습니다. 학원으로 문의해주세요.';
+    }
+
     res.render('user/login', {
         title: '로그인 - 이든배움국어학원',
         error: null,
+        message: message,
         redirect: req.query.redirect || null
     });
 });
@@ -91,7 +97,7 @@ router.post('/verify-code', async (req, res) => {
                 sessionVerification.code === code &&
                 sessionVerification.expires > Date.now()) {
                 isValid = true;
-                logger.info('세션 기반 인증번호 확인 성공:', phone);
+                // 세션 기반 인증번호 확인 성공 (과도한 로그 제거)
             }
         }
 
@@ -99,10 +105,10 @@ router.post('/verify-code', async (req, res) => {
             return res.status(400).json({ error: '인증번호가 일치하지 않거나 만료되었습니다.' });
         }
 
-        // 학생 테이블에서 전화번호 확인
+        // 학생 테이블에서 전화번호 확인 (퇴원 상태도 함께 확인)
         const phoneColumn = type === 'student' ? 'sphone' : 'pphone';
         const [students] = await db.execute(
-            `SELECT id, sphone, pphone FROM student WHERE ${phoneColumn} = ?`,
+            `SELECT id, sphone, pphone, name, liveStatus FROM student WHERE ${phoneColumn} = ?`,
             [phone]
         );
 
@@ -113,6 +119,14 @@ router.post('/verify-code', async (req, res) => {
         }
 
         const student = students[0];
+
+        // 퇴원 처리된 학생 회원가입 차단
+        if (student.liveStatus === 'N') {
+            logger.warn(`퇴원 처리된 학생 회원가입 시도: ${phone}, 학생명: ${student.name}`);
+            return res.status(403).json({
+                error: '퇴원 처리된 학생은 회원가입할 수 없습니다. 학원으로 문의해주세요.'
+            });
+        }
 
         // user_info에서 기존 회원 확인
         const [userInfos] = await db.execute(
@@ -235,8 +249,8 @@ router.post('/signup', async (req, res) => {
             return res.status(400).json({ error: '이미 사용 중인 이메일입니다.' });
         }
 
-        // SHA1으로 비밀번호 해시화
-        const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+        // 비밀번호 해시화
+        const hashedPassword = hashPassword(password);
 
         // 회원가입 처리
         await db.execute(
@@ -269,16 +283,33 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
         }
 
-        // SHA1으로 비밀번호 해시화
-        const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+        // 비밀번호 해시화
+        const hashedPassword = hashPassword(password);
 
-        // 사용자 확인
-        const [users] = await db.execute(
-            'SELECT * FROM user_info WHERE email = ? AND pw = ? AND code = "S"',
-            [email, hashedPassword]
-        );
+        // 사용자 확인 (user_info와 student 테이블 조인, 퇴원 학생 제외)
+        const [users] = await db.execute(`
+            SELECT ui.*, s.name as student_name, s.liveStatus
+            FROM user_info ui
+            JOIN student s ON ui.student_id = s.id
+            WHERE ui.email = ? AND ui.pw = ? AND ui.code = "S" AND s.liveStatus = "Y"
+        `, [email, hashedPassword]);
 
         if (users.length === 0) {
+            // 퇴원 처리된 학생인지 확인
+            const [withdrawnUsers] = await db.execute(`
+                SELECT s.name as student_name
+                FROM user_info ui
+                JOIN student s ON ui.student_id = s.id
+                WHERE ui.email = ? AND ui.pw = ? AND ui.code = "S" AND s.liveStatus = "N"
+            `, [email, hashedPassword]);
+
+            if (withdrawnUsers.length > 0) {
+                logger.warn(`퇴원 처리된 학생 로그인 시도: ${email}, 학생명: ${withdrawnUsers[0].student_name}`);
+                return res.status(403).json({
+                    error: '퇴원 처리된 학생은 로그인할 수 없습니다. 학원으로 문의해주세요.'
+                });
+            }
+
             return res.status(400).json({ error: '이메일 또는 비밀번호가 잘못되었습니다.' });
         }
 
@@ -290,8 +321,12 @@ router.post('/login', async (req, res) => {
             email: user.email,
             studentId: user.student_id,
             sphone: user.sphone,
-            pphone: user.pphone
+            pphone: user.pphone,
+            studentName: user.student_name,
+            liveStatus: user.liveStatus
         };
+
+        logger.info(`학생 로그인 성공: ${email}, 학생명: ${user.student_name}`);
 
         // redirect 파라미터가 있으면 해당 URL로, 없으면 홈으로 이동
         const redirectUrl = req.body.redirect || '/';

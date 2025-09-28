@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const db = require('../config/database');
 const logger = require('../utils/logger');
+const { hashPassword } = require('../utils/auth');
 
 router.get('/login', (req, res) => {
     res.render('auth/login', { 
@@ -16,8 +16,8 @@ router.post('/login', async (req, res) => {
     const { email, password, autoLogin } = req.body;
     
     try {
-        const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-        
+        const hashedPassword = hashPassword(password);
+
         const [rows] = await db.execute(
             'SELECT * FROM admin_user_info WHERE email = ? AND pw = ?',
             [email, hashedPassword]
@@ -73,9 +73,9 @@ router.post('/register', async (req, res) => {
             });
             return;
         }
-        
-        const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-        
+
+        const hashedPassword = hashPassword(password);
+
         await db.execute(
             'UPDATE admin_user_info SET email = ?, pw = ?, insert_time = NOW() WHERE name = ? AND phone = ?',
             [email, hashedPassword, name, phone]
@@ -148,7 +148,7 @@ router.post('/find-password', async (req, res) => {
         }
         
         const tempPassword = Math.random().toString(36).substring(2, 10);
-        const hashedPassword = crypto.createHash('sha1').update(tempPassword).digest('hex');
+        const hashedPassword = hashPassword(tempPassword);
         
         await db.execute(
             'UPDATE admin_user_info SET pw = ? WHERE email = ?',

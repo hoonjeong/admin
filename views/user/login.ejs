@@ -146,6 +146,12 @@
 
         <h1>로그인</h1>
 
+        <% if (message) { %>
+        <div class="alert alert-warning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+            <%= message %>
+        </div>
+        <% } %>
+
         <form id="loginForm">
             <div class="form-group">
                 <label for="email">이메일</label>

@@ -5,6 +5,7 @@ const { sendSMS } = require('../utils/sms');
 const { isTeacher } = require('../middleware/adminAuth');
 const { handleControllerError } = require('../utils/errorHandler');
 const logger = require('../utils/logger');
+const { hashPassword } = require('../utils/auth');
 
 router.get('/sms', isTeacher, async (req, res) => {
     try {
@@ -417,7 +418,7 @@ router.post('/profile/edit', isTeacher, async (req, res) => {
             }
 
             // 현재 비밀번호 확인
-            const hashedCurrentPassword = crypto.createHash('sha1').update(currentPassword).digest('hex');
+            const hashedCurrentPassword = hashPassword(currentPassword);
             const [currentUser] = await db.execute(
                 'SELECT id FROM admin_user_info WHERE id = ? AND pw = ?',
                 [teacherId, hashedCurrentPassword]
@@ -428,7 +429,7 @@ router.post('/profile/edit', isTeacher, async (req, res) => {
             }
 
             // 새 비밀번호 해시화
-            const hashedNewPassword = crypto.createHash('sha1').update(newPassword).digest('hex');
+            const hashedNewPassword = hashPassword(newPassword);
             updateQuery = 'UPDATE admin_user_info SET email = ?, phone = ?, pw = ? WHERE id = ?';
             updateParams = [email, phone, hashedNewPassword, teacherId];
         }

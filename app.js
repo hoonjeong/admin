@@ -76,6 +76,39 @@ app.use((req, res, next) => {
     next();
 });
 
+// 학생 세션 상태 확인 미들웨어
+app.use(async (req, res, next) => {
+    // 학생 로그인 세션이 있는 경우에만 확인
+    if (req.session.userInfo && req.session.userInfo.studentId) {
+        try {
+            const db = require('./config/database');
+            const [students] = await db.execute(
+                'SELECT liveStatus FROM student WHERE id = ?',
+                [req.session.userInfo.studentId]
+            );
+
+            // 학생이 퇴원 처리된 경우 세션 삭제
+            if (students.length > 0 && students[0].liveStatus === 'N') {
+                delete req.session.userInfo;
+                if (req.xhr || req.headers.accept?.indexOf('json') > -1) {
+                    return res.status(403).json({
+                        error: '퇴원 처리되어 로그아웃되었습니다. 학원으로 문의해주세요.',
+                        redirectUrl: '/user/login'
+                    });
+                } else {
+                    req.session.save((err) => {
+                        return res.redirect('/user/login?message=퇴원처리로인한로그아웃');
+                    });
+                    return;
+                }
+            }
+        } catch (error) {
+            // 학생 상태 확인 오류 (로그 제거 - 운영 환경에서 불필요)
+        }
+    }
+    next();
+});
+
 app.get('/admin-login', (req, res, next) => {
     try {
         if (req.session && req.session.user) {
