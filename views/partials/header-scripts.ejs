@@ -1,54 +1,178 @@
 <script>
-// 드롭다운 메뉴 기능 (모든 학생 페이지 공통)
-document.addEventListener('DOMContentLoaded', function() {
-    // 드롭다운 토글 기능
-    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    // 모바일 햄버거 메뉴 기능
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navMenu = document.getElementById('navMenu');
 
-    dropdownToggles.forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            const dropdownMenu = this.nextElementSibling;
-
-            // 다른 드롭다운 메뉴 닫기
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu !== dropdownMenu) {
-                    menu.classList.remove('show');
-                }
+        if (mobileMenuToggle && navMenu) {
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileMenuToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
             });
 
-            // 현재 드롭다운 토글
-            if (dropdownMenu) {
+            // 메뉴 항목 클릭 시 모바일 메뉴 닫기
+            const navItems = navMenu.querySelectorAll('.nav-item:not(.dropdown)');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        mobileMenuToggle.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    }
+                });
+            });
+
+            // 드롭다운 메뉴 항목 클릭 시 스크롤 처리
+            const dropdownItems = navMenu.querySelectorAll('.dropdown-item[data-scroll]');
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('data-scroll');
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        // 드롭다운 메뉴 닫기
+                        const academyDropdownMenu = document.getElementById('academyDropdownMenu');
+                        if (academyDropdownMenu) {
+                            academyDropdownMenu.classList.remove('show');
+                        }
+
+                        // 모바일 메뉴 닫기
+                        if (window.innerWidth <= 768) {
+                            mobileMenuToggle.classList.remove('active');
+                            navMenu.classList.remove('active');
+                        }
+
+                        // 부드러운 스크롤
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // 오시는길 링크 처리
+            const locationLink = navMenu.querySelector('.dropdown-item[href="/#location-map"]');
+            if (locationLink) {
+                locationLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetElement = document.getElementById('location-map');
+
+                    if (targetElement) {
+                        // 드롭다운 메뉴 닫기
+                        const academyDropdownMenu = document.getElementById('academyDropdownMenu');
+                        if (academyDropdownMenu) {
+                            academyDropdownMenu.classList.remove('show');
+                        }
+
+                        // 모바일 메뉴 닫기
+                        if (window.innerWidth <= 768) {
+                            mobileMenuToggle.classList.remove('active');
+                            navMenu.classList.remove('active');
+                        }
+
+                        // 부드러운 스크롤
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+
+            // 창 크기 변경 시 모바일 메뉴 상태 초기화
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    mobileMenuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // 드롭다운 메뉴 기능 - 이든국어소개
+        const academyDropdown = document.getElementById('academyDropdown');
+        const academyDropdownMenu = document.getElementById('academyDropdownMenu');
+
+        if (academyDropdown && academyDropdownMenu) {
+            academyDropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                academyDropdownMenu.classList.toggle('show');
+            });
+        }
+
+        // 드롭다운 메뉴 기능 - 사용자 메뉴
+        const dropdown = document.getElementById('userDropdown');
+        const dropdownMenu = document.getElementById('userDropdownMenu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('click', function(e) {
+                e.preventDefault();
                 dropdownMenu.classList.toggle('show');
+            });
+        }
+
+        // 외부 클릭 시 모든 드롭다운 닫기
+        document.addEventListener('click', function(e) {
+            // 이든국어소개 드롭다운 닫기
+            if (academyDropdown && academyDropdownMenu) {
+                if (!academyDropdown.contains(e.target) && !academyDropdownMenu.contains(e.target)) {
+                    academyDropdownMenu.classList.remove('show');
+                }
+            }
+
+            // 사용자 드롭다운 닫기
+            if (dropdown && dropdownMenu) {
+                if (!dropdown.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                    dropdownMenu.classList.remove('show');
+                }
             }
         });
     });
 
-    // 외부 클릭 시 드롭다운 닫기
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.dropdown')) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.remove('show');
-            });
+    // 로그아웃 함수
+    async function logout() {
+        if (confirm('로그아웃하시겠습니까?')) {
+            try {
+                const response = await fetch('/user/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('로그아웃되었습니다.');
+                    window.location.href = data.redirectUrl;
+                } else {
+                    alert('로그아웃 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('로그아웃 중 오류가 발생했습니다.');
+            }
         }
-    });
-
-    // 모바일 메뉴 토글
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const navMenu = document.getElementById('navMenu');
-
-    if (mobileMenuToggle && navMenu) {
-        mobileMenuToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
-            navMenu.classList.toggle('active');
-        });
     }
 
-    // 스크롤 기능 (홈페이지 섹션으로 이동)
-    document.querySelectorAll('[data-scroll]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            // 홈페이지로 이동하는 링크는 그대로 두기 (기본 동작 허용)
-            // preventDefault() 호출하지 않음
+    // 현재 페이지에 따른 메뉴 활성화
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            if (item.getAttribute('href') === currentPath) {
+                item.classList.add('active');
+            }
         });
+
+        // 특별한 경우들 처리
+        if (currentPath.startsWith('/board')) {
+            document.querySelector('.nav-item[href="/board"]')?.classList.add('active');
+        } else if (currentPath.startsWith('/video')) {
+            document.querySelector('.nav-item[href="/video"]')?.classList.add('active');
+        } else if (currentPath === '/') {
+            document.querySelector('.nav-item[href="/"]')?.classList.add('active');
+        }
     });
-});
 </script>
