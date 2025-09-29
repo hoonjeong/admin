@@ -222,7 +222,7 @@
                         <i class="bi bi-cloud-upload" style="font-size: 48px; color: #999;"></i>
                         <p style="margin: 10px 0; color: #666;">클릭하거나 파일을 드래그하여 업로드</p>
                         <p style="font-size: 14px; color: #999;">최대 10개 파일, 각 50MB 이하</p>
-                        <input type="file" id="fileInput" multiple style="display: none;" accept="*">
+                        <input type="file" id="fileInput" multiple style="display: none;" accept="image/*,video/*,*">
                     </div>
                     <div class="file-list" id="fileList"></div>
                 </div>
@@ -253,11 +253,50 @@
                 toolbar: [
                     'heading', '|',
                     'bold', 'italic', 'underline', 'strikethrough', '|',
-                    'link', 'bulletedList', 'numberedList', '|',
+                    'link', 'imageUpload', 'mediaEmbed', '|',
+                    'bulletedList', 'numberedList', '|',
                     'outdent', 'indent', '|',
                     'blockQuote', 'insertTable', '|',
                     'undo', 'redo'
                 ],
+                image: {
+                    toolbar: [
+                        'imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side',
+                        '|', 'resizeImage:50', 'resizeImage:75', 'resizeImage:original'
+                    ],
+                    upload: {
+                        types: ['jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff']
+                    }
+                },
+                mediaEmbed: {
+                    previewsInData: true,
+                    providers: [
+                        {
+                            name: 'youtube',
+                            url: /^youtube\.com\/watch\?v=([\w-]+)/,
+                            html: match => `<div style="position: relative; padding-bottom: 56.25%; padding-top: 0; height: 0;">
+                                <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                                        src="https://www.youtube.com/embed/${match[1]}"
+                                        frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+                                </iframe>
+                            </div>`
+                        },
+                        {
+                            name: 'vimeo',
+                            url: /^vimeo\.com\/(\d+)/,
+                            html: match => `<div style="position: relative; padding-bottom: 56.25%; padding-top: 0; height: 0;">
+                                <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                                        src="https://player.vimeo.com/video/${match[1]}"
+                                        frameborder="0" allowfullscreen>
+                                </iframe>
+                            </div>`
+                        }
+                    ]
+                },
+                simpleUpload: {
+                    uploadUrl: '/post/api/upload-image',
+                    withCredentials: true
+                },
                 height: 400
             })
             .then(newEditor => {

@@ -314,28 +314,115 @@ router.delete('/delete/:id', isAdminAuthenticated, isAdmin, async (req, res, nex
     }
 });
 
+// 에디터 이미지 업로드 API
+router.post('/api/upload-image', isAdminAuthenticated, upload.single('upload'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                error: {
+                    message: '파일이 업로드되지 않았습니다.'
+                }
+            });
+        }
+
+        const file = req.file;
+
+        // 이미지 파일인지 확인
+        if (!file.mimetype.startsWith('image/')) {
+            // 업로드된 파일 삭제
+            fs.unlinkSync(file.path);
+            return res.status(400).json({
+                error: {
+                    message: '이미지 파일만 업로드할 수 있습니다.'
+                }
+            });
+        }
+
+        // DB에 파일 정보 저장
+        const [result] = await db.query(
+            `INSERT INTO file_info (filename, filepath, filesize, mimetype, category, insert_time)
+             VALUES (?, ?, ?, ?, 'editor_image', NOW())`,
+            [file.originalname, file.path, file.size, file.mimetype]
+        );
+
+        const fileId = result.insertId;
+
+        // 웹에서 접근 가능한 URL 생성
+        const imageUrl = `/post/api/image/${fileId}`;
+
+        res.json({
+            url: imageUrl
+        });
+
+    } catch (error) {
+        logger.error('Image upload error:', error);
+
+        // 업로드된 파일이 있다면 삭제
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        res.status(500).json({
+            error: {
+                message: '이미지 업로드 중 오류가 발생했습니다.'
+            }
+        });
+    }
+});
+
+// 에디터 이미지 서빙
+router.get('/api/image/:fileId', async (req, res) => {
+    try {
+        const fileId = req.params.fileId;
+
+        const [files] = await db.query(
+            'SELECT * FROM file_info WHERE id = ?',
+            [fileId]
+        );
+
+        if (files.length === 0) {
+            return res.status(404).json({ error: '이미지를 찾을 수 없습니다.' });
+        }
+
+        const file = files[0];
+
+        if (!fs.existsSync(file.filepath)) {
+            return res.status(404).json({ error: '이미지 파일이 존재하지 않습니다.' });
+        }
+
+        // 이미지 파일 서빙
+        res.setHeader('Content-Type', file.mimetype);
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1년 캐시
+        res.sendFile(path.resolve(file.filepath));
+
+    } catch (error) {
+        logger.error('Image serving error:', error);
+        res.status(500).json({ error: '이미지 로딩 중 오류가 발생했습니다.' });
+    }
+});
+
 // 파일 다운로드
 router.get('/download/:fileId', isAdminAuthenticated, async (req, res, next) => {
     try {
         const fileId = req.params.fileId;
-        
+
         const files = await db.query(
             'SELECT * FROM file_info WHERE id = ?',
             [fileId]
         );
-        
+
         if (files[0].length === 0) {
             throw new AppError('파일을 찾을 수 없습니다.', 404);
         }
-        
+
         const file = files[0][0];
-        
+
         if (!fs.existsSync(file.filepath)) {
             throw new AppError('파일이 존재하지 않습니다.', 404);
         }
-        
+
         res.download(file.filepath, file.filename);
-        
+
     } catch (error) {
         logger.error('File download error:', error);
         next(error);

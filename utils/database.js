@@ -45,11 +45,12 @@ async function getPostsWithCommentCount(db, params = {}) {
     
     // Get posts with pagination
     const postsQuery = `
-        SELECT p.id, p.subject, p.category, p.read_count, 
-               DATE_FORMAT(p.insert_time, "%m/%d") as date, 
-               u.name as writer
+        SELECT p.id, p.subject, p.category, p.read_count,
+               DATE_FORMAT(p.insert_time, "%m/%d") as date,
+               u.name as writer,
+               SUBSTRING(REGEXP_REPLACE(p.contents, '<[^>]*>', ''), 1, 100) as content_preview
         ${baseQuery}
-        ORDER BY p.id DESC 
+        ORDER BY p.id DESC
         LIMIT ? OFFSET ?
     `;
     queryParams.push(limit, offset);
