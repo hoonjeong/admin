@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회원가입 - 이든배움국어학원 관리자</title>
-    <link href="<%= process.env.BOOTSTRAP_CSS_URL || 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' %>" rel="stylesheet">
+    <title>회원가입 - 이든배움국어학원</title>
+    <%- include('../partials/styles') %>
+    <%- include('../partials/header-styles') %>
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 100px 20px 20px;
+        }
+        .page-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            min-height: calc(100vh - 120px);
         }
         .register-container {
             background: white;
@@ -73,7 +77,10 @@
     </style>
 </head>
 <body>
-    <div class="register-container">
+    <%- include('../partials/header') %>
+
+    <div class="page-container">
+        <div class="register-container">
         <div class="register-header">
             <h2>회원가입</h2>
             <p class="text-muted">이든배움국어학원 관리자</p>
@@ -121,6 +128,7 @@
                 <a href="/auth/login" class="btn btn-back">로그인 페이지로 돌아가기</a>
             </div>
         </form>
+        </div>
     </div>
 
     <script src="<%= process.env.JQUERY_URL || 'https://code.jquery.com/jquery-3.6.0.min.js' %>"></script>
@@ -205,6 +213,47 @@
                     this.submit();
                 }
             });
+
+            // 드롭다운 메뉴 JavaScript
+            // 드롭다운 토글 기능
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdownMenu = this.nextElementSibling;
+
+                    // 다른 드롭다운 메뉴 닫기
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        if (menu !== dropdownMenu) {
+                            menu.classList.remove('show');
+                        }
+                    });
+
+                    // 현재 드롭다운 토글
+                    dropdownMenu.classList.toggle('show');
+                });
+            });
+
+            // 외부 클릭 시 드롭다운 닫기
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
+
+            // 모바일 메뉴 토글
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const navMenu = document.getElementById('navMenu');
+
+            if (mobileMenuToggle && navMenu) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                });
+            }
         });
     </script>
 </body>

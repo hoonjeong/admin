@@ -46,7 +46,8 @@ router.get('/', async (req, res) => {
             allFaqs,
             category,
             showAll: showAll || !!category,
-            categories: allCategories.map(c => c.category)
+            categories: allCategories.map(c => c.category),
+            userInfo: req.session.userInfo || null
         });
     } catch (error) {
         logger.error('FAQ 페이지 로딩 오류', error);

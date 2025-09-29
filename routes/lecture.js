@@ -103,6 +103,30 @@ router.post('/add', upload.array('files', 10), async (req, res) => {
     }
 });
 
+// 선생님별 담당 클래스 조회 API
+router.get('/api/classes-by-teacher/:teacherName', async (req, res) => {
+    try {
+        const { teacherName } = req.params;
+
+        // class_info와 class_status를 조인하여 live 상태인 클래스만 가져오기
+        // teacherOne 또는 teacherTwo 필드가 일치하는 클래스들을 조회
+        const [classes] = await db.execute(`
+            SELECT DISTINCT ci.id, ci.name
+            FROM class_info ci
+            INNER JOIN class_status cs ON ci.id = cs.class_id
+            WHERE ci.liveStatus = 1
+            AND cs.status = 'live'
+            AND (ci.teacherOne = ? OR ci.teacherTwo = ?)
+            ORDER BY ci.name
+        `, [teacherName, teacherName]);
+
+        res.json({ success: true, classes });
+    } catch (error) {
+        logger.error('Error fetching classes by teacher', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 router.get('/list', async (req, res) => {
     try {
         const { search, searchType } = req.query;

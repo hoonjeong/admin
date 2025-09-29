@@ -26,7 +26,11 @@
             <a href="<%= process.env.NAVER_BLOG_TUITION_URL || 'https://blog.naver.com/edenschool/223955303630' %>" class="nav-item" target="_blank">교습비</a>
             <a href="/faq" class="nav-item">문의하기</a>
             <!-- <a href="/auth/login" class="nav-item">관리자</a> -->
-            <% if (typeof userInfo !== 'undefined' && userInfo) { %>
+            <%
+            // userInfo가 정의되지 않았거나 null인 경우 처리
+            const hasUserInfo = typeof userInfo !== 'undefined' && userInfo !== null && userInfo;
+            %>
+            <% if (hasUserInfo) { %>
                 <div class="nav-item dropdown">
                     <a href="#" class="dropdown-toggle" id="userDropdown">내정보 ▼</a>
                     <div class="dropdown-menu" id="userDropdownMenu">

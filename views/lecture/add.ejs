@@ -113,17 +113,8 @@
                             
                             <div class="mb-3">
                                 <label class="form-label">수강반 선택 <span class="text-danger">*</span></label>
-                                <div class="class-checkbox-container">
-                                    <% classes.forEach(cls => { %>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="classIds" value="<%= cls.id %>" 
-                                                   id="class_<%= cls.id %>">
-                                            <label class="form-check-label" for="class_<%= cls.id %>">
-                                                <%= cls.name %>
-                                            </label>
-                                        </div>
-                                    <% }); %>
+                                <div class="class-checkbox-container" id="classContainer">
+                                    <p class="text-muted">먼저 담당 선생님을 선택해주세요.</p>
                                 </div>
                                 <small class="text-muted">강의를 수강할 반을 선택하세요. (복수 선택 가능)</small>
                             </div>
@@ -151,7 +142,57 @@
                 return false;
             }
         });
-        
+
+        // 선생님 선택에 따른 클래스 필터링
+        document.getElementById('teacher').addEventListener('change', async function() {
+            const teacherName = this.value;
+            const classContainer = document.getElementById('classContainer');
+
+            if (!teacherName) {
+                // 선생님이 선택되지 않았으면 안내 메시지 표시
+                classContainer.innerHTML = '<p class="text-muted">먼저 담당 선생님을 선택해주세요.</p>';
+                return;
+            }
+
+            // 로딩 표시
+            classContainer.innerHTML = '<p class="text-muted"><i class="bi bi-hourglass-split"></i> 클래스 목록을 불러오는 중...</p>';
+
+            try {
+                // API 호출하여 선생님의 담당 클래스 가져오기
+                const response = await fetch(`/lecture/api/classes-by-teacher/${encodeURIComponent(teacherName)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // 클래스 체크박스 목록 업데이트
+                    classContainer.innerHTML = '';
+
+                    if (data.classes.length === 0) {
+                        classContainer.innerHTML = '<p class="text-muted">해당 선생님이 담당하는 활성 클래스가 없습니다.</p>';
+                    } else {
+                        data.classes.forEach(cls => {
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.className = 'form-check';
+                            checkboxDiv.innerHTML = `
+                                <input class="form-check-input" type="checkbox"
+                                       name="classIds" value="${cls.id}"
+                                       id="class_${cls.id}">
+                                <label class="form-check-label" for="class_${cls.id}">
+                                    ${cls.name}
+                                </label>
+                            `;
+                            classContainer.appendChild(checkboxDiv);
+                        });
+                    }
+                } else {
+                    console.error('Failed to fetch classes:', data.error);
+                    classContainer.innerHTML = '<p class="text-danger">클래스 목록을 불러오는데 실패했습니다.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+                classContainer.innerHTML = '<p class="text-danger">클래스 목록을 불러오는데 실패했습니다.</p>';
+            }
+        });
+
         // 이미 업로드된 파일 목록 저장
         let uploadedFiles = [];
         
