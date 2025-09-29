@@ -287,9 +287,23 @@
                                     </a>
                                     <% if (post.content_preview) { %>
                                         <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                            <%= post.content_preview.replace(/&nbsp;/g, ' ').trim() %>
-                                            <% if (post.content_preview.length >= 100) { %>...
-                                            <% } %>
+                                            <%
+                                                // HTML 태그 제거 및 공백 정리
+                                                let cleanContent = post.content_preview
+                                                    .replace(/<[^>]*>/g, '')  // HTML 태그 제거
+                                                    .replace(/&nbsp;/g, ' ')  // &nbsp; 제거
+                                                    .replace(/&lt;/g, '<')    // HTML 엔티티 변환
+                                                    .replace(/&gt;/g, '>')
+                                                    .replace(/&amp;/g, '&')
+                                                    .replace(/\s+/g, ' ')     // 연속된 공백을 하나로
+                                                    .trim();
+
+                                                // 100자로 제한
+                                                if (cleanContent.length > 100) {
+                                                    cleanContent = cleanContent.substring(0, 100) + '...';
+                                                }
+                                            %>
+                                            <%= cleanContent %>
                                         </div>
                                     <% } %>
                                 </td>

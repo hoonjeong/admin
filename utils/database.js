@@ -48,7 +48,7 @@ async function getPostsWithCommentCount(db, params = {}) {
         SELECT p.id, p.subject, p.category, p.read_count,
                DATE_FORMAT(p.insert_time, "%m/%d") as date,
                u.name as writer,
-               SUBSTRING(REGEXP_REPLACE(p.contents, '<[^>]*>', ''), 1, 100) as content_preview
+               SUBSTRING(p.contents, 1, 200) as content_preview
         ${baseQuery}
         ORDER BY p.id DESC
         LIMIT ? OFFSET ?
