@@ -251,7 +251,19 @@
                                 작성자: <%= post.author_name || '관리자' %> | 작성일: <%= new Date(post.insert_time).toLocaleDateString('ko-KR') %> | 조회수: <%= post.read_count %>
                             </div>
                             <div class="post-preview">
-                                <%= post.contents.replace(/<[^>]*>/g, '').substring(0, 150) %>...
+                                <%
+                                    // HTML 태그 및 엔티티 제거, 공백 정리
+                                    let cleanContent = post.contents
+                                        .replace(/<[^>]*>/g, '')  // HTML 태그 제거
+                                        .replace(/&nbsp;/g, ' ')  // &nbsp; 제거
+                                        .replace(/&lt;/g, '<')    // HTML 엔티티 변환
+                                        .replace(/&gt;/g, '>')
+                                        .replace(/&amp;/g, '&')
+                                        .replace(/\s+/g, ' ')     // 연속된 공백을 하나로
+                                        .trim()
+                                        .substring(0, 150);
+                                %>
+                                <%= cleanContent %>...
                             </div>
                         </li>
                     <% }) %>
