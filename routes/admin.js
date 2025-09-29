@@ -14,6 +14,15 @@ const sortClasses = (classes, sortBy) => {
     }
 };
 
+// 기본 /admin 경로는 로그인 페이지로 리다이렉트
+router.get('/', (req, res) => {
+    if (req.session && req.session.user) {
+        return res.redirect('/admin/dashboard');
+    } else {
+        return res.redirect('/auth/login');
+    }
+});
+
 router.use(isAdminAuthenticated);
 
 router.get('/dashboard', asyncHandler(async (req, res) => {

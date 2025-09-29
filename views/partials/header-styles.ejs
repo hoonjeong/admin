@@ -29,6 +29,48 @@
         max-width: 1200px;
         margin: 0 auto;
         flex-wrap: wrap;
+        position: relative;
+    }
+
+    .nav-menu {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* 모바일 햄버거 메뉴 버튼 */
+    .mobile-menu-toggle {
+        display: none;
+        flex-direction: column;
+        cursor: pointer;
+        padding: 5px;
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .mobile-menu-toggle span {
+        width: 25px;
+        height: 3px;
+        background-color: #333;
+        margin: 3px 0;
+        transition: 0.3s;
+        border-radius: 2px;
+    }
+
+    /* 햄버거 메뉴 애니메이션 */
+    .mobile-menu-toggle.active span:nth-child(1) {
+        transform: rotate(-45deg) translate(-6px, 6px);
+    }
+
+    .mobile-menu-toggle.active span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .mobile-menu-toggle.active span:nth-child(3) {
+        transform: rotate(45deg) translate(-6px, -6px);
     }
 
     .nav-item {
@@ -111,22 +153,74 @@
 
     @media (max-width: 768px) {
         .nav {
-            flex-wrap: wrap;
-            padding: 10px;
+            flex-direction: column;
+            padding: 10px 20px;
+            min-height: 60px;
+        }
+
+        /* 모바일에서 햄버거 버튼 표시 */
+        .mobile-menu-toggle {
+            display: flex !important;
+        }
+
+        /* 모바일 메뉴 숨김/표시 */
+        .nav-menu {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            margin-top: 10px;
+            padding: 15px 0;
+        }
+
+        .nav-menu.active {
+            display: flex !important;
         }
 
         .nav-item {
-            margin: 5px 10px;
-            font-size: 14px;
+            margin: 8px 0;
+            font-size: 16px;
+            padding: 8px 20px;
+            width: 100%;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .nav-item:last-child {
+            border-bottom: none;
         }
 
         .dropdown-toggle {
-            margin: 0 10px;
+            margin: 8px 0;
+            font-size: 16px;
+            padding: 8px 20px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-menu {
+            position: static;
+            display: block;
+            box-shadow: none;
+            background-color: #f8f9fa;
+            margin: 0;
+            border-radius: 0;
+            margin-left: 20px;
+        }
+
+        .dropdown-item {
+            padding: 8px 20px;
             font-size: 14px;
         }
 
         body {
-            padding-top: 100px;
+            padding-top: 80px;
+        }
+
+        .header {
+            min-height: 60px;
         }
     }
 </style>

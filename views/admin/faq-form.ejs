@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= mode === 'edit' ? 'FAQ 수정' : 'FAQ 추가' %> - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .faq-container {
+            padding: 30px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 15px;
+            background-color: white;
+        }
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .required {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+        .character-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="faq-container">
+        <h2 class="section-title"><%= mode === 'edit' ? 'FAQ 수정' : 'FAQ 추가' %></h2>
+
+        <div class="form-card">
+            <form id="faqForm">
+                <% if (mode === 'edit') { %>
+                    <input type="hidden" id="faqId" value="<%= faq.id %>">
+                <% } %>
+
+                <!-- 카테고리 -->
+                <div class="form-group">
+                    <label for="category" class="form-label">카테고리 <span class="required">*</span></label>
+                    <input type="text" id="category" name="category" class="form-control" required
+                           placeholder="카테고리를 입력하세요 (예: 수업, 결제, 시설 등)"
+                           list="categoryList" maxlength="50"
+                           value="<%= mode === 'edit' ? faq.category : '' %>">
+
+                    <datalist id="categoryList">
+                        <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                            <% categories.forEach(function(category) { %>
+                                <option value="<%= category %>">
+                            <% }); %>
+                        <% } %>
+                    </datalist>
+
+                    <div class="character-count">
+                        <span id="categoryCount">0</span>/50자
+                    </div>
+                    <small class="text-muted">기존 카테고리를 선택하거나 새로운 카테고리를 입력할 수 있습니다.</small>
+                </div>
+
+                <!-- 질문 -->
+                <div class="form-group">
+                    <label for="question" class="form-label">질문 <span class="required">*</span></label>
+                    <input type="text" id="question" name="question" class="form-control" required
+                           placeholder="자주 묻는 질문을 입력하세요" maxlength="200"
+                           value="<%= mode === 'edit' ? faq.question : '' %>">
+                    <div class="character-count">
+                        <span id="questionCount">0</span>/200자
+                    </div>
+                </div>
+
+                <!-- 답변 -->
+                <div class="form-group">
+                    <label for="answer" class="form-label">답변 <span class="required">*</span></label>
+                    <textarea id="answer" name="answer" class="form-control" required
+                              placeholder="질문에 대한 상세한 답변을 입력하세요" maxlength="1000"><%= mode === 'edit' ? faq.answer : '' %></textarea>
+                    <div class="character-count">
+                        <span id="answerCount">0</span>/1000자
+                    </div>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-<%= mode === 'edit' ? 'check' : 'plus' %>-circle"></i>
+                        <%= mode === 'edit' ? '수정 완료' : '등록하기' %>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        <i class="bi bi-x-circle"></i> 취소
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        // 글자 수 카운트
+        function updateCharCount(elementId, countId) {
+            const element = document.getElementById(elementId);
+            const countElement = document.getElementById(countId);
+            countElement.textContent = element.value.length;
+        }
+
+        document.getElementById('category').addEventListener('input', function() {
+            updateCharCount('category', 'categoryCount');
+        });
+
+        document.getElementById('question').addEventListener('input', function() {
+            updateCharCount('question', 'questionCount');
+        });
+
+        document.getElementById('answer').addEventListener('input', function() {
+            updateCharCount('answer', 'answerCount');
+        });
+
+        // 페이지 로드 시 글자 수 초기화
+        window.addEventListener('load', function() {
+            updateCharCount('category', 'categoryCount');
+            updateCharCount('question', 'questionCount');
+            updateCharCount('answer', 'answerCount');
+        });
+
+        // 폼 제출
+        document.getElementById('faqForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const category = document.getElementById('category').value.trim();
+            const question = document.getElementById('question').value.trim();
+            const answer = document.getElementById('answer').value.trim();
+
+            if (!category) {
+                alert('카테고리를 선택해주세요.');
+                return;
+            }
+
+            if (!question) {
+                alert('질문을 입력해주세요.');
+                return;
+            }
+
+            if (!answer) {
+                alert('답변을 입력해주세요.');
+                return;
+            }
+
+            const formData = {
+                category: category,
+                question: question,
+                answer: answer
+            };
+
+            const isEdit = <%= mode === 'edit' ? 'true' : 'false' %>;
+            const url = isEdit ? `/admin/faq/edit/${document.getElementById('faqId').value}` : '/admin/faq/add';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(isEdit ? 'FAQ가 수정되었습니다.' : 'FAQ가 등록되었습니다.');
+                    window.location.href = '/admin/faq';
+                } else {
+                    alert(data.message || (isEdit ? 'FAQ 수정에 실패했습니다.' : 'FAQ 등록에 실패했습니다.'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('서버 오류가 발생했습니다.');
+            });
+        });
+    </script>
+</body>
+</html>

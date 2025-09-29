@@ -6,7 +6,7 @@
     <title>글쓰기 - 이든배움국어학원 관리자</title>
     <%- include('../partials/styles') %>
     <!-- CKEditor 5 CDN -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+    <script src="<%= process.env.CKEDITOR_URL || 'https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js' %>"></script>
     <style>
         .main-container {
             padding: 30px;

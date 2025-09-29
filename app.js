@@ -21,6 +21,8 @@ const examRoutes = require('./routes/exam');
 const userRoutes = require('./routes/user');
 const boardRoutes = require('./routes/board');
 const videoRoutes = require('./routes/video');
+const faqRoutes = require('./routes/faq');
+const adminFaqRoutes = require('./routes/admin-faq');
 
 const app = express();
 
@@ -135,6 +137,8 @@ app.use('/exam', examRoutes);
 app.use('/user', userRoutes);
 app.use('/board', boardRoutes);
 app.use('/video', videoRoutes);
+app.use('/faq', faqRoutes);
+app.use('/admin/faq', adminFaqRoutes);
 
 app.use((req, res) => {
     res.status(404).render('404');

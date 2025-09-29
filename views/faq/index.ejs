@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자주 묻는 질문(FAQ) - 이든배움국어학원</title>
+    <%- include('../partials/styles') %>
+    <%- include('../partials/header-styles') %>
+    <style>
+        .faq-container {
+            padding: 40px 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            min-height: calc(100vh - 200px);
+        }
+        .faq-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .faq-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .faq-description {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
+        }
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 40px;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 15px 50px 15px 20px;
+            border: 2px solid #dee2e6;
+            border-radius: 25px;
+            font-size: 16px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+        }
+        .search-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .search-button:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .category-filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        .category-btn {
+            padding: 10px 20px;
+            border: 2px solid #dee2e6;
+            background: white;
+            color: #666;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .category-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .category-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+        }
+        .popular-faqs {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .faq-list {
+            display: none;
+        }
+        .faq-list.active {
+            display: block;
+        }
+        .faq-item {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .faq-item:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .faq-question {
+            padding: 20px;
+            cursor: pointer;
+            background: white;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .faq-question:hover {
+            background: #f8f9fa;
+        }
+        .faq-question.active {
+            background: #667eea;
+            color: white;
+        }
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .faq-answer.active {
+            padding: 20px;
+            max-height: 300px;
+        }
+        .faq-answer-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .category-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .question-mark {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .answer-mark {
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .view-all-btn {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn-outline-primary {
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .btn-outline-primary:hover {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        .chevron {
+            transition: transform 0.3s;
+        }
+        .chevron.active {
+            transform: rotate(180deg);
+        }
+
+        /* 푸터 스타일 */
+        .footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 20px 20px;
+            margin-top: 40px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .footer-content p:first-child {
+            font-weight: bold;
+            color: white;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+
+    <div class="faq-container">
+        <div class="faq-header">
+            <h1 class="faq-title">자주 묻는 질문(FAQ)</h1>
+            <p class="faq-description">이든국어에 대해 궁금한 내용을 검색해보세요</p>
+        </div>
+
+        <!-- 검색창 -->
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="궁금한 내용을 검색해보세요...">
+            <button class="search-button" onclick="searchFAQ()">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+
+        <!-- 카테고리 필터 -->
+        <div class="category-filters">
+            <a href="/faq" class="category-btn <%= !category || category === 'all' ? 'active' : '' %>">전체보기</a>
+            <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+                <% categories.forEach(function(cat) { %>
+                    <a href="/faq?category=<%= encodeURIComponent(cat) %>" class="category-btn <%= category === cat ? 'active' : '' %>"><%= cat %></a>
+                <% }); %>
+            <% } %>
+        </div>
+
+        <!-- 인기 FAQ (전체보기가 아닐 때만 표시) -->
+        <% if (!category || category === 'all') { %>
+        <div class="popular-faqs" id="popularSection">
+            <h2 class="section-title">
+                <i class="bi bi-fire" style="color: #ff6b35;"></i>
+                조회수가 높은 질문
+            </h2>
+            <div class="faq-list active">
+                <% if (popularFaqs && popularFaqs.length > 0) { %>
+                    <% popularFaqs.forEach(function(faq) { %>
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFAQ(this, <%= faq.id %>)">
+                            <div style="display: flex; align-items: center;">
+                                <div class="question-mark">Q</div>
+                                <span class="category-badge"><%= faq.category %></span>
+                                <%= faq.question %>
+                            </div>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-content">
+                                <div style="display: flex; align-items: flex-start;">
+                                    <div class="answer-mark">A</div>
+                                    <div style="white-space: pre-line;"><%= faq.answer %></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } %>
+            </div>
+            <div class="view-all-btn">
+                <a href="/faq?all=true" class="btn-outline-primary">전체보기</a>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- 전체 FAQ 목록 -->
+        <% if (showAll || category) { %>
+        <div class="all-faqs" id="allSection">
+            <h2 class="section-title">
+                <i class="bi bi-question-circle" style="color: #667eea;"></i>
+                <% if (category && category !== 'all') { %>
+                    <%= category %> 관련 질문
+                <% } else { %>
+                    전체 FAQ
+                <% } %>
+            </h2>
+            <div class="faq-list active" id="faqList">
+                <% if (allFaqs && allFaqs.length > 0) { %>
+                    <% allFaqs.forEach(function(faq) { %>
+                    <div class="faq-item" data-question="<%= faq.question.toLowerCase() %>" data-answer="<%= faq.answer.toLowerCase() %>">
+                        <button class="faq-question" onclick="toggleFAQ(this, <%= faq.id %>)">
+                            <div style="display: flex; align-items: center;">
+                                <div class="question-mark">Q</div>
+                                <span class="category-badge"><%= faq.category %></span>
+                                <%= faq.question %>
+                            </div>
+                            <i class="bi bi-chevron-down chevron"></i>
+                        </button>
+                        <div class="faq-answer">
+                            <div class="faq-answer-content">
+                                <div style="display: flex; align-items: flex-start;">
+                                    <div class="answer-mark">A</div>
+                                    <div style="white-space: pre-line;"><%= faq.answer %></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="bi bi-question-circle"></i>
+                        <p>등록된 FAQ가 없습니다.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>© 이든배움진학지도보습학원 교육청등록 제5569호 사업자번호 130-92-61827</p>
+            <p>경기 부천시 소향로 29 (상동, 그린프라자) 503호, 504호</p>
+        </div>
+    </footer>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        // FAQ 토글 기능
+        function toggleFAQ(button, faqId) {
+            const answer = button.nextElementSibling;
+            const chevron = button.querySelector('.chevron');
+            const isActive = answer.classList.contains('active');
+
+            // 모든 FAQ 닫기
+            document.querySelectorAll('.faq-answer.active').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.faq-question.active').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.chevron.active').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 클릭한 FAQ만 열기 (이미 열려있지 않은 경우)
+            if (!isActive) {
+                answer.classList.add('active');
+                button.classList.add('active');
+                chevron.classList.add('active');
+
+                // 조회수 증가
+                fetch(`/faq/view/${faqId}`, { method: 'POST' });
+            }
+        }
+
+        // FAQ 검색 기능
+        function searchFAQ() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (!searchTerm.trim()) {
+                // 검색어가 없으면 모든 FAQ 표시
+                showAllFAQs();
+                return;
+            }
+
+            const faqItems = document.querySelectorAll('.faq-item');
+            let hasResults = false;
+
+            faqItems.forEach(item => {
+                const question = item.dataset.question || '';
+                const answer = item.dataset.answer || '';
+
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    hasResults = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (!hasResults) {
+                showNoResults();
+            }
+        }
+
+        // 모든 FAQ 표시
+        function showAllFAQs() {
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.style.display = 'block';
+            });
+            hideNoResults();
+        }
+
+        // 검색 결과 없음 표시
+        function showNoResults() {
+            let noResultsDiv = document.getElementById('noResults');
+            if (!noResultsDiv) {
+                noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'noResults';
+                noResultsDiv.className = 'empty-state';
+                noResultsDiv.innerHTML = `
+                    <i class="bi bi-search"></i>
+                    <p>검색 결과가 없습니다.</p>
+                `;
+                document.getElementById('faqList').appendChild(noResultsDiv);
+            }
+            noResultsDiv.style.display = 'block';
+        }
+
+        // 검색 결과 없음 숨기기
+        function hideNoResults() {
+            const noResultsDiv = document.getElementById('noResults');
+            if (noResultsDiv) {
+                noResultsDiv.style.display = 'none';
+            }
+        }
+
+        // 검색 입력 시 실시간 검색
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            if (searchTerm.length >= 2) {
+                searchFAQ();
+            } else if (searchTerm.length === 0) {
+                showAllFAQs();
+            }
+        });
+
+        // 엔터키로 검색
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchFAQ();
+            }
+        });
+    </script>
+</body>
+</html>

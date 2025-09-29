@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ 관리 - 이든배움국어학원 관리자</title>
+    <%- include('../partials/styles') %>
+    <style>
+        .faq-container {
+            padding: 30px;
+        }
+        .section-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .faq-controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #68428e 100%);
+        }
+        .faq-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .faq-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .faq-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        .category-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .category-수업 { background-color: #e3f2fd; color: #1976d2; }
+        .category-결제 { background-color: #f3e5f5; color: #7b1fa2; }
+        .category-기타 { background-color: #e8f5e8; color: #388e3c; }
+        .question-text {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-buttons .btn {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="faq-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">FAQ 관리</h2>
+            <a href="/admin/faq/add" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> FAQ 추가
+            </a>
+        </div>
+
+        <!-- 카테고리 필터 -->
+        <div class="filter-buttons">
+            <a href="/admin/faq" class="btn <%= !category || category === 'all' ? 'btn-primary' : 'btn-outline-primary' %>">
+                전체
+            </a>
+            <a href="/admin/faq?category=수업" class="btn <%= category === '수업' ? 'btn-primary' : 'btn-outline-primary' %>">
+                수업
+            </a>
+            <a href="/admin/faq?category=결제" class="btn <%= category === '결제' ? 'btn-primary' : 'btn-outline-primary' %>">
+                결제
+            </a>
+            <a href="/admin/faq?category=기타" class="btn <%= category === '기타' ? 'btn-primary' : 'btn-outline-primary' %>">
+                기타
+            </a>
+        </div>
+
+        <% if (faqs && faqs.length > 0) { %>
+            <div class="faq-table">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th style="width: 100px;">카테고리</th>
+                            <th>질문</th>
+                            <th style="width: 100px;">조회수</th>
+                            <th style="width: 120px;">등록일</th>
+                            <th style="width: 120px;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% faqs.forEach(function(faq) { %>
+                        <tr>
+                            <td><%= faq.id %></td>
+                            <td>
+                                <span class="category-badge category-<%= faq.category %>">
+                                    <%= faq.category %>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="question-text" title="<%= faq.question %>">
+                                    <%= faq.question %>
+                                </div>
+                            </td>
+                            <td><%= faq.read_count %></td>
+                            <td><%= new Date(faq.insert_time).toLocaleDateString('ko-KR') %></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="/admin/faq/edit/<%= faq.id %>" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button onclick="deleteFaq(<%= faq.id %>)" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="empty-state">
+                <i class="bi bi-question-circle"></i>
+                <p>등록된 FAQ가 없습니다.</p>
+                <a href="/admin/faq/add" class="btn btn-primary">첫 번째 FAQ 추가하기</a>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('../partials/scripts') %>
+    <script>
+        function deleteFaq(id) {
+            if (confirm('정말로 이 FAQ를 삭제하시겠습니까?')) {
+                fetch(`/admin/faq/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('FAQ가 삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert(data.message || 'FAQ 삭제에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('서버 오류가 발생했습니다.');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

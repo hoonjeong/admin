@@ -1,26 +1,43 @@
 <header class="header">
     <nav class="nav">
-        <a href="/" class="nav-item">이든국어소개</a>
-        <a href="/#high-school" class="nav-item">고등부</a>
-        <a href="/#middle-school" class="nav-item">중등부</a>
-        <a href="/#reading" class="nav-item">독서교육원</a>
-        <a href="/board" class="nav-item">게시판</a>
-        <a href="/video" class="nav-item">동영상강의</a>
-        <a href="<%= process.env.NAVER_BOOKING_URL || 'https://booking.naver.com/booking/13/bizes/844951' %>" class="nav-item" target="_blank">상담예약</a>
-        <a href="/board?category=R" class="nav-item">수강후기</a>
-        <a href="<%= process.env.NAVER_BLOG_TUITION_URL || 'https://blog.naver.com/edenschool/223955303630' %>" class="nav-item" target="_blank">교습비</a>
-        <a href="/auth/login" class="nav-item">관리자</a>
-        <% if (typeof userInfo !== 'undefined' && userInfo) { %>
+        <!-- 모바일 햄버거 메뉴 버튼 -->
+        <div class="mobile-menu-toggle" id="mobileMenuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- 데스크톱 메뉴 -->
+        <div class="nav-menu" id="navMenu">
             <div class="nav-item dropdown">
-                <a href="#" class="dropdown-toggle" id="userDropdown">내정보 ▼</a>
-                <div class="dropdown-menu" id="userDropdownMenu">
-                    <a href="/user/profile" class="dropdown-item">내정보 보기</a>
-                    <a href="#" class="dropdown-item" onclick="logout()">로그아웃</a>
+                <a href="#" class="dropdown-toggle" id="academyDropdown">이든국어소개 ▼</a>
+                <div class="dropdown-menu" id="academyDropdownMenu">
+                    <a href="/#greeting" class="dropdown-item" data-scroll="greeting">대표원장 인사말</a>
+                    <a href="/#high-school" class="dropdown-item" data-scroll="high-school">고등부</a>
+                    <a href="/#middle-school" class="dropdown-item" data-scroll="middle-school">중등부</a>
+                    <a href="/#reading" class="dropdown-item" data-scroll="reading">독서교육원</a>
+                    <a href="/#location-map" class="dropdown-item">오시는길</a>
                 </div>
             </div>
-        <% } else { %>
-            <a href="/user/login" class="nav-item">로그인</a>
-            <a href="/user/register" class="nav-item">회원가입</a>
-        <% } %>
+            <a href="/board" class="nav-item">게시판</a>
+            <a href="/video" class="nav-item">동영상강의</a>
+            <a href="<%= process.env.NAVER_BOOKING_URL || 'https://booking.naver.com/booking/13/bizes/844951' %>" class="nav-item" target="_blank">상담예약</a>
+            <a href="/board?category=R" class="nav-item">수강후기</a>
+            <a href="<%= process.env.NAVER_BLOG_TUITION_URL || 'https://blog.naver.com/edenschool/223955303630' %>" class="nav-item" target="_blank">교습비</a>
+            <a href="/faq" class="nav-item">문의하기</a>
+            <!-- <a href="/auth/login" class="nav-item">관리자</a> -->
+            <% if (typeof userInfo !== 'undefined' && userInfo) { %>
+                <div class="nav-item dropdown">
+                    <a href="#" class="dropdown-toggle" id="userDropdown">내정보 ▼</a>
+                    <div class="dropdown-menu" id="userDropdownMenu">
+                        <a href="/user/profile" class="dropdown-item">내정보 보기</a>
+                        <a href="#" class="dropdown-item" onclick="logout()">로그아웃</a>
+                    </div>
+                </div>
+            <% } else { %>
+                <a href="/user/login" class="nav-item">로그인</a>
+                <a href="/user/register" class="nav-item">회원가입</a>
+            <% } %>
+        </div>
     </nav>
 </header>
