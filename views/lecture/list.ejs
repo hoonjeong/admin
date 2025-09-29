@@ -197,7 +197,7 @@
                                 </td>
                                 <td><%= lecture.class_name %></td>
                                 <td><%= lecture.teacher %></td>
-                                <td><%= lecture.lecture_date ? new Date(lecture.lecture_date).toLocaleDateString('ko-KR') : '-' %></td>
+                                <td><%= lecture.lecture_date || '-' %></td>
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">
                                         <a href="/lecture/edit/<%= lecture.id %>" class="btn btn-outline-primary btn-sm">

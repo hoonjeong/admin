@@ -56,31 +56,36 @@ router.get('/edit', [isAdminAuthenticated, isAdmin], async (req, res) => {
             ['T']
         );
         
-        // 수강반 목록 조회 쿼리 생성
-        let query = `SELECT id, name, grade, year, day, hour, minute, teacherOne, teacherTwo, liveStatus 
-                     FROM class_info WHERE 1=1`;
+        // 수강반 목록 조회 쿼리 생성 (학생 수 포함)
+        let query = `SELECT ci.id, ci.name, ci.grade, ci.year, ci.day, ci.hour, ci.minute,
+                            ci.teacherOne, ci.teacherTwo, ci.liveStatus,
+                            COUNT(cs.student_id) as studentCount
+                     FROM class_info ci
+                     LEFT JOIN class_status cs ON ci.id = cs.class_id AND cs.status = 1
+                     WHERE 1=1`;
         const params = [];
         
         // 검색 조건 추가
         if (search) {
-            query += ' AND name LIKE ?';
+            query += ' AND ci.name LIKE ?';
             params.push(`%${search}%`);
         }
-        
+
         if (teacher) {
-            query += ' AND (teacherOne = ? OR teacherTwo = ?)';
+            query += ' AND (ci.teacherOne = ? OR ci.teacherTwo = ?)';
             params.push(teacher, teacher);
         }
-        
+
         // 상태 필터 - 기본값은 'active' (진행중)
         if (status === 'active') {
-            query += ' AND liveStatus = 1';
+            query += ' AND ci.liveStatus = 1';
         } else if (status === 'inactive') {
-            query += ' AND liveStatus = 0';
+            query += ' AND ci.liveStatus = 0';
         }
         // 'all'인 경우 WHERE 조건 추가 안함
-        
-        query += ' ORDER BY name ASC';
+
+        query += ' GROUP BY ci.id, ci.name, ci.grade, ci.year, ci.day, ci.hour, ci.minute, ci.teacherOne, ci.teacherTwo, ci.liveStatus';
+        query += ' ORDER BY ci.name ASC';
         
         const [classes] = await db.execute(query, params);
         

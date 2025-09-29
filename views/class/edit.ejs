@@ -103,6 +103,15 @@
             color: #0056b3;
             text-decoration: underline;
         }
+
+        .student-count {
+            font-weight: bold;
+            color: #667eea;
+            padding: 4px 8px;
+            background-color: #f8f9ff;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
         
         .btn-sm {
             padding: 4px 10px;
@@ -188,6 +197,7 @@
                     <thead>
                         <tr>
                             <th>수강반명</th>
+                            <th>인원</th>
                             <th>학년</th>
                             <th>요일/시간</th>
                             <th>1교시</th>
@@ -205,11 +215,16 @@
                                 </a>
                             </td>
                             <td>
-                                <% 
+                                <span class="student-count">
+                                    <%= classItem.studentCount || 0 %>명
+                                </span>
+                            </td>
+                            <td>
+                                <%
                                 // year 필드가 실제 학년을 나타냄
                                 let schoolLevel = '';
                                 let displayGrade = classItem.year;
-                                
+
                                 if (classItem.grade <= 6) {
                                     schoolLevel = '초';
                                 } else if (classItem.grade <= 9) {
