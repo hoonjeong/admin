@@ -433,6 +433,16 @@
                 font-size: 2.5rem !important;
             }
 
+            .intro-logo {
+                max-width: 280px !important;
+                margin-bottom: 30px !important;
+            }
+
+            .scroll-arrow {
+                font-size: 2rem !important;
+                bottom: 20px !important;
+            }
+
             .section-text {
                 font-size: 1.8rem;
             }
@@ -576,6 +586,28 @@
             }
         }
 
+        /* 홈페이지 전용 body 스타일 (헤더 패딩 제거) */
+        body {
+            padding-top: 0 !important;
+        }
+
+        .intro-section {
+            padding-top: 0;
+        }
+
+        /* 홈페이지용 헤더 스타일 */
+        .header {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            transition: background-color 0.3s ease;
+        }
+
+        /* 스크롤 시 헤더 스타일 */
+        .header.scrolled {
+            background-color: white !important;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1) !important;
+        }
+
         /* 마지막 이미지 링크 효과 */
         .section-image a:hover {
             transform: scale(1.02);
@@ -630,12 +662,17 @@
     <%- include('../partials/header') %>
 
     <section id="intro" class="section intro-section">
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; position: relative;">
-            <img src="/image/logo.png" alt="이든배움국어학원 로고" class="intro-logo" style="max-width: 350px; margin-bottom: 40px;">
-            <h1 class="intro-text" style="text-align: center; font-size: 3.2rem; font-weight: 400; line-height: 1.4; color: #333;">
-                본질에 충실한 국어학습으로<br>
-                <span style="color: #007bff; font-weight: 600;">학생들의 성적을 책임집니다</span>
-            </h1>
+        <div style="height: 100vh; position: relative; display: flex; align-items: center; justify-content: center;">
+            <!-- 중앙 컨텐츠 -->
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <img src="/image/logo.png" alt="이든배움국어학원 로고" class="intro-logo" style="max-width: 350px; margin-bottom: 40px;">
+                <h1 class="intro-text" style="font-size: 3.2rem; font-weight: 400; line-height: 1.4; color: #333;">
+                    본질에 충실한 국어학습으로<br>
+                    <span style="color: #007bff; font-weight: 600;">학생들의 성적을 책임집니다</span>
+                </h1>
+            </div>
+
+            <!-- 하단 화살표 -->
             <div class="scroll-arrow" onclick="scrollToNext()" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 2.5rem; color: #007bff; cursor: pointer; animation: bounce 2s infinite;">
                 ⬇
             </div>
@@ -1292,6 +1329,14 @@
         window.addEventListener('scroll', () => {
             const sections = document.querySelectorAll('.section');
             const scrollPos = window.scrollY + 100;
+            const header = document.querySelector('.header');
+
+            // 헤더 배경색 변경 (스크롤이 100px 이상이면 불투명하게)
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
 
             sections.forEach((section, index) => {
                 const top = section.offsetTop;

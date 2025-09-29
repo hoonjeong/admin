@@ -283,37 +283,46 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요.' });
         }
 
-        // 비밀번호 해시화
-        const hashedPassword = hashPassword(password);
-
-        // 사용자 확인 (user_info와 student 테이블 조인, 퇴원 학생 제외)
-        const [users] = await db.execute(`
+        // 먼저 이메일로 계정이 존재하는지 확인
+        const [emailCheck] = await db.execute(`
             SELECT ui.*, s.name as student_name, s.liveStatus
             FROM user_info ui
             JOIN student s ON ui.student_id = s.id
-            WHERE ui.email = ? AND ui.pw = ? AND ui.code = "S" AND s.liveStatus = "Y"
-        `, [email, hashedPassword]);
+            WHERE ui.email = ? AND ui.code = "S"
+        `, [email]);
 
-        if (users.length === 0) {
-            // 퇴원 처리된 학생인지 확인
-            const [withdrawnUsers] = await db.execute(`
-                SELECT s.name as student_name
-                FROM user_info ui
-                JOIN student s ON ui.student_id = s.id
-                WHERE ui.email = ? AND ui.pw = ? AND ui.code = "S" AND s.liveStatus = "N"
-            `, [email, hashedPassword]);
-
-            if (withdrawnUsers.length > 0) {
-                logger.warn(`퇴원 처리된 학생 로그인 시도: ${email}, 학생명: ${withdrawnUsers[0].student_name}`);
-                return res.status(403).json({
-                    error: '퇴원 처리된 학생은 로그인할 수 없습니다. 학원으로 문의해주세요.'
-                });
-            }
-
-            return res.status(400).json({ error: '이메일 또는 비밀번호가 잘못되었습니다.' });
+        if (emailCheck.length === 0) {
+            logger.warn(`존재하지 않는 이메일로 로그인 시도: ${email}`);
+            return res.status(400).json({ error: '등록되지 않은 이메일입니다. 이메일을 확인해주세요.' });
         }
 
-        const user = users[0];
+        // 비밀번호 해시화
+        const hashedPassword = hashPassword(password);
+
+        // 이메일과 비밀번호 모두 확인
+        const [passwordCheck] = await db.execute(`
+            SELECT ui.*, s.name as student_name, s.liveStatus
+            FROM user_info ui
+            JOIN student s ON ui.student_id = s.id
+            WHERE ui.email = ? AND ui.pw = ? AND ui.code = "S"
+        `, [email, hashedPassword]);
+
+        if (passwordCheck.length === 0) {
+            logger.warn(`비밀번호 불일치 로그인 시도: ${email}, 학생명: ${emailCheck[0].student_name}`);
+            return res.status(400).json({ error: '비밀번호가 잘못되었습니다. 비밀번호를 확인해주세요.' });
+        }
+
+        const user = passwordCheck[0];
+
+        // 퇴원 처리된 학생인지 확인
+        if (user.liveStatus === 'N') {
+            logger.warn(`퇴원 처리된 학생 로그인 시도: ${email}, 학생명: ${user.student_name}`);
+            return res.status(403).json({
+                error: '퇴원 처리된 학생은 로그인할 수 없습니다. 학원으로 문의해주세요.'
+            });
+        }
+
+        // 모든 검증을 통과한 활성 학생 - 로그인 성공
 
         // 세션에 사용자 정보 저장
         req.session.userInfo = {

@@ -16,36 +16,52 @@ router.post('/login', async (req, res) => {
     const { email, password, autoLogin } = req.body;
     
     try {
-        const hashedPassword = hashPassword(password);
+        // 먼저 이메일로 계정이 존재하는지 확인
+        const [emailCheck] = await db.execute(
+            'SELECT * FROM admin_user_info WHERE email = ?',
+            [email]
+        );
 
-        const [rows] = await db.execute(
+        if (emailCheck.length === 0) {
+            logger.warn(`존재하지 않는 관리자 이메일로 로그인 시도: ${email}`);
+            return res.render('auth/login', {
+                error: '등록되지 않은 이메일입니다. 이메일을 확인해주세요.'
+            });
+        }
+
+        // 비밀번호 확인
+        const hashedPassword = hashPassword(password);
+        const [passwordCheck] = await db.execute(
             'SELECT * FROM admin_user_info WHERE email = ? AND pw = ?',
             [email, hashedPassword]
         );
-        
-        if (rows.length > 0) {
-            const user = rows[0];
 
-            req.session.adminUser = {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                phone: user.phone,
-                code: user.code
-            };
-            
-            if (autoLogin) {
-                req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30일
-            } else {
-                req.session.cookie.maxAge = null; // 브라우저 종료 시 만료
-            }
-            
-            res.redirect('/admin/dashboard');
-        } else {
-            res.render('auth/login', { 
-                error: '이메일 또는 비밀번호가 일치하지 않습니다.' 
+        if (passwordCheck.length === 0) {
+            logger.warn(`관리자 비밀번호 불일치 로그인 시도: ${email}, 이름: ${emailCheck[0].name}`);
+            return res.render('auth/login', {
+                error: '비밀번호가 잘못되었습니다. 비밀번호를 확인해주세요.'
             });
         }
+
+        // 로그인 성공
+        const user = passwordCheck[0];
+
+        req.session.adminUser = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            phone: user.phone,
+            code: user.code
+        };
+
+        if (autoLogin) {
+            req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30일
+        } else {
+            req.session.cookie.maxAge = null; // 브라우저 종료 시 만료
+        }
+
+        logger.info(`관리자 로그인 성공: ${email}, 이름: ${user.name}`);
+        res.redirect('/admin/dashboard');
     } catch (error) {
         logger.error('Login error', error);
         res.render('auth/login', { 
