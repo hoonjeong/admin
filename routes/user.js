@@ -27,7 +27,8 @@ router.get('/login', (req, res) => {
         title: '로그인 - 이든배움국어학원',
         error: null,
         message: message,
-        redirect: req.query.redirect || null
+        redirect: req.query.redirect || null,
+        userInfo: req.session.userInfo || null
     });
 });
 

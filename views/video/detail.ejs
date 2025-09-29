@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= lecture.subject %> - 이든배움국어학원</title>
+    <%- include('../partials/header-styles') %>
     <style>
         * {
             margin: 0;
@@ -301,25 +302,7 @@
     </style>
 </head>
 <body>
-    <header class="header">
-        <nav class="nav">
-            <a href="/" class="nav-item">이든국어소개</a>
-            <a href="/#high-school" class="nav-item">고등부</a>
-            <a href="/#middle-school" class="nav-item">중등부</a>
-            <a href="/#reading" class="nav-item">독서교육원</a>
-            <a href="/board" class="nav-item">게시판</a>
-            <a href="/video" class="nav-item active">동영상강의</a>
-            <a href="#" class="nav-item">상담예약</a>
-            <a href="#" class="nav-item">수강후기</a>
-            <a href="#" class="nav-item">교습비</a>
-            <% if (typeof userInfo !== 'undefined' && userInfo) { %>
-                <a href="#" class="nav-item" onclick="logout()">내정보 (로그아웃)</a>
-            <% } else { %>
-                <a href="/user/login" class="nav-item">로그인</a>
-                <a href="/user/register" class="nav-item">회원가입</a>
-            <% } %>
-        </nav>
-    </header>
+    <%- include('../partials/header') %>
 
     <div class="container">
         <div class="breadcrumb">
@@ -537,5 +520,7 @@
             }
         });
     </script>
+
+    <%- include('../partials/header-scripts') %>
 </body>
 </html>

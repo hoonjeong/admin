@@ -369,6 +369,7 @@ router.get('/students/:classId', async (req, res) => {
                 s.name,
                 s.school,
                 s.grade,
+                s.year,
                 s.sphone,
                 s.pphone,
                 cs.start_time as enrollment_date
