@@ -148,7 +148,7 @@ router.get('/list', isAdminAuthenticated, isAdmin, async (req, res, next) => {
 router.get('/view/:id', isAdminAuthenticated, async (req, res, next) => {
     try {
         const postId = req.params.id;
-        const result = await getPostWithDetails(db, postId);
+        const result = await getPostWithDetails(db, postId, req.session);
         
         if (!result) {
             throw new AppError('게시글을 찾을 수 없습니다.', 404);

@@ -87,15 +87,35 @@ async function getPostsWithCommentCount(db, params = {}) {
     };
 }
 
-async function getPostWithDetails(db, postId) {
+async function getPostWithDetails(db, postId, session = null) {
     const connection = await db.getConnection();
-    
+
     try {
-        // Increment view count
-        await connection.execute(
-            'UPDATE post_info SET read_count = read_count + 1 WHERE id = ?',
-            [postId]
-        );
+        // 세션 기반 조회수 중복 방지
+        if (session) {
+            if (!session.viewedPosts) {
+                session.viewedPosts = {};
+            }
+
+            const sessionKey = `post_${postId}`;
+            const lastViewed = session.viewedPosts[sessionKey];
+            const now = Date.now();
+
+            // 마지막 조회로부터 5분(300,000ms)이 지났거나 처음 조회하는 경우만 조회수 증가
+            if (!lastViewed || (now - lastViewed) > 300000) {
+                await connection.execute(
+                    'UPDATE post_info SET read_count = read_count + 1 WHERE id = ?',
+                    [postId]
+                );
+                session.viewedPosts[sessionKey] = now;
+            }
+        } else {
+            // 세션이 없는 경우 기존 로직 유지 (관리자용)
+            await connection.execute(
+                'UPDATE post_info SET read_count = read_count + 1 WHERE id = ?',
+                [postId]
+            );
+        }
 
         // Get post details
         const [posts] = await connection.execute(
