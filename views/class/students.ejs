@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %> - 이든배움국어학원 관리자</title>
+    <link href="<%= process.env.BOOTSTRAP_CSS_URL || 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css' %>" rel="stylesheet">
+    <link rel="stylesheet" href="<%= process.env.BOOTSTRAP_ICONS_URL || 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css' %>">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
+        }
+        .navbar-nav .nav-link:hover {
+            color: rgba(255,255,255,0.8) !important;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .page-title {
+            font-size: 24px;
+            color: #333;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .class-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .class-info-item {
+            display: inline-block;
+            margin-right: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .students-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .students-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .student-info {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1.5fr 1.5fr;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .student-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .student-detail {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .phone-number {
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .graduate-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+
+        .graduate-btn:hover {
+            background: #c82333;
+        }
+
+        .graduate-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .student-info {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .students-header {
+                padding: 10px 15px;
+            }
+
+            .student-item {
+                padding: 15px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .graduate-btn {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="container">
+        <div class="page-header">
+            <h2 class="page-title">
+                <i class="bi bi-people-fill me-2"></i>
+                <%= classInfo.name %> 수강생 관리
+            </h2>
+            <div class="class-info">
+                <span class="class-info-item"><strong>학년:</strong> <%= classInfo.grade %></span>
+                <span class="class-info-item"><strong>요일:</strong> <%= classInfo.day %></span>
+                <span class="class-info-item"><strong>시간:</strong> <%= classInfo.hour %>:<%= classInfo.minute.toString().padStart(2, '0') %></span>
+                <span class="class-info-item"><strong>담당선생님:</strong> <%= classInfo.teacherOne %><% if (classInfo.teacherTwo) { %>, <%= classInfo.teacherTwo %><% } %></span>
+            </div>
+            <div class="mt-3">
+                <a href="/class/edit" class="back-link">
+                    <i class="bi bi-arrow-left me-1"></i>수강반 관리로 돌아가기
+                </a>
+            </div>
+        </div>
+
+        <div class="students-container">
+            <div class="students-header">
+                수강생 목록 (총 <%= students.length %>명)
+            </div>
+
+            <% if (students && students.length > 0) { %>
+                <% students.forEach(student => { %>
+                    <div class="student-item" id="student-<%= student.id %>">
+                        <div class="student-info">
+                            <div class="student-name"><%= student.name %></div>
+                            <div class="student-detail"><%= student.school %></div>
+                            <div class="student-detail"><%= student.grade %>학년</div>
+                            <div class="student-detail phone-number">
+                                <i class="bi bi-phone me-1"></i><%= student.sphone || '-' %>
+                            </div>
+                            <div class="student-detail phone-number">
+                                <i class="bi bi-person me-1"></i><%= student.pphone || '-' %>
+                            </div>
+                        </div>
+                        <button class="graduate-btn" onclick="graduateStudent(<%= classInfo.id %>, <%= student.id %>, '<%= student.name %>')">
+                            <i class="bi bi-mortarboard me-1"></i>종강
+                        </button>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="no-students">
+                    <i class="bi bi-info-circle me-2"></i>
+                    현재 수강중인 학생이 없습니다.
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script src="<%= process.env.BOOTSTRAP_JS_URL || 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js' %>"></script>
+    <script>
+        async function graduateStudent(classId, studentId, studentName) {
+            if (!confirm(`${studentName} 학생을 종강 처리하시겠습니까?\n\n종강 처리 후에는 되돌릴 수 없습니다.`)) {
+                return;
+            }
+
+            const button = document.querySelector(`#student-${studentId} .graduate-btn`);
+            const originalText = button.innerHTML;
+
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>처리중...';
+
+                const response = await fetch(`/class/students/${classId}/graduate/${studentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 성공 시 해당 학생 항목을 페이드 아웃하고 제거
+                    const studentItem = document.getElementById(`student-${studentId}`);
+                    studentItem.style.transition = 'opacity 0.5s ease-out';
+                    studentItem.style.opacity = '0';
+
+                    setTimeout(() => {
+                        studentItem.remove();
+
+                        // 학생 수 업데이트
+                        const remainingStudents = document.querySelectorAll('.student-item').length;
+                        document.querySelector('.students-header').textContent =
+                            `수강생 목록 (총 ${remainingStudents}명)`;
+
+                        // 학생이 없으면 메시지 표시
+                        if (remainingStudents === 0) {
+                            document.querySelector('.students-container').innerHTML = `
+                                <div class="students-header">수강생 목록 (총 0명)</div>
+                                <div class="no-students">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    현재 수강중인 학생이 없습니다.
+                                </div>
+                            `;
+                        }
+                    }, 500);
+
+                    alert(`${studentName} 학생이 종강 처리되었습니다.`);
+                } else {
+                    throw new Error(result.error || '종강 처리에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('종강 처리 중 오류가 발생했습니다: ' + error.message);
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        }
+    </script>
+</body>
+</html>

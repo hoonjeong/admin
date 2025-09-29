@@ -91,6 +91,18 @@
             display: flex;
             gap: 5px;
         }
+
+        .class-name-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .class-name-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
         
         .btn-sm {
             padding: 4px 10px;
@@ -187,7 +199,11 @@
                     <tbody>
                         <% classes.forEach(function(classItem) { %>
                         <tr>
-                            <td><%= classItem.name %></td>
+                            <td>
+                                <a href="/class/students/<%= classItem.id %>" class="class-name-link">
+                                    <%= classItem.name %>
+                                </a>
+                            </td>
                             <td>
                                 <% 
                                 // year 필드가 실제 학년을 나타냄

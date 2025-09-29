@@ -340,4 +340,67 @@ router.post('/:id/toggle-status', [isAdminAuthenticated, isAdmin], async (req, r
     }
 });
 
+// 수강반 학생 목록 조회
+router.get('/students/:classId', async (req, res) => {
+    try {
+        const { classId } = req.params;
+
+        // 수강반 정보 조회
+        const [classInfo] = await db.execute(
+            'SELECT * FROM class_info WHERE id = ?',
+            [classId]
+        );
+
+        if (classInfo.length === 0) {
+            return res.status(404).render('error', {
+                error: '해당 수강반을 찾을 수 없습니다.'
+            });
+        }
+
+        // 수강반 학생 목록 조회 (class_status에서 live 상태인 학생들)
+        const [students] = await db.execute(`
+            SELECT
+                s.id,
+                s.name,
+                s.school,
+                s.grade,
+                s.sphone,
+                s.pphone,
+                cs.start_time as enrollment_date
+            FROM class_status cs
+            INNER JOIN student s ON cs.student_id = s.id
+            WHERE cs.class_id = ? AND cs.status = 'live'
+            ORDER BY s.name
+        `, [classId]);
+
+        res.render('class/students', {
+            classInfo: classInfo[0],
+            students,
+            pageTitle: `${classInfo[0].name} 수강생 관리`,
+            user: req.session.adminUser
+        });
+    } catch (error) {
+        logger.error('Error loading class students', error);
+        res.status(500).render('error', { error });
+    }
+});
+
+// 학생 종강 처리
+router.post('/students/:classId/graduate/:studentId', async (req, res) => {
+    try {
+        const { classId, studentId } = req.params;
+
+        // class_status에서 해당 학생의 상태를 0으로 변경하고 end_time 업데이트
+        await db.execute(
+            'UPDATE class_status SET status = ?, end_time = NOW() WHERE class_id = ? AND student_id = ? AND status = ?',
+            [0, classId, studentId, 'live']
+        );
+
+        res.json({ success: true, message: '학생이 종강 처리되었습니다.' });
+    } catch (error) {
+        logger.error('Error graduating student', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
