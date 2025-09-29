@@ -14,7 +14,6 @@ async function getClassesWithStudentCount(db, whereClause = '', params = []) {
     return rows;
 }
 
-// Function removed - was using incorrect column names and not being used
 
 async function getPostsWithCommentCount(db, params = {}) {
     const { page = 1, limit = 20, search = '', category = '' } = params;
@@ -91,24 +90,11 @@ async function getPostWithDetails(db, postId, session = null) {
     const connection = await db.getConnection();
 
     try {
-        // 세션 기반 조회수 중복 방지
+        // 조회수 증가 처리
         if (session) {
-            if (!session.viewedPosts) {
-                session.viewedPosts = {};
-            }
-
-            const sessionKey = `post_${postId}`;
-            const lastViewed = session.viewedPosts[sessionKey];
-            const now = Date.now();
-
-            // 마지막 조회로부터 5분(300,000ms)이 지났거나 처음 조회하는 경우만 조회수 증가
-            if (!lastViewed || (now - lastViewed) > 300000) {
-                await connection.execute(
-                    'UPDATE post_info SET read_count = read_count + 1 WHERE id = ?',
-                    [postId]
-                );
-                session.viewedPosts[sessionKey] = now;
-            }
+            // 세션이 있는 경우 중복 방지 로직 적용
+            const { incrementViewCount } = require('./viewTracker');
+            await incrementViewCount(connection, session, 'post', postId, 'post_info');
         } else {
             // 세션이 없는 경우 기존 로직 유지 (관리자용)
             await connection.execute(

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../utils/logger');
 const db = require('../config/database');
+const { incrementViewCount } = require('../utils/viewTracker');
 
 // 사용자 FAQ 페이지
 router.get('/', async (req, res) => {
@@ -60,23 +61,8 @@ router.post('/view/:id', async (req, res) => {
     try {
         const faqId = req.params.id;
 
-        // 세션 기반 조회수 중복 방지
-        if (!req.session.viewedFaqs) {
-            req.session.viewedFaqs = {};
-        }
-
-        const sessionKey = `faq_${faqId}`;
-        const lastViewed = req.session.viewedFaqs[sessionKey];
-        const now = Date.now();
-
-        // 마지막 조회로부터 5분(300,000ms)이 지났거나 처음 조회하는 경우만 조회수 증가
-        if (!lastViewed || (now - lastViewed) > 300000) {
-            await db.execute(
-                'UPDATE faq_info SET read_count = read_count + 1 WHERE id = ?',
-                [faqId]
-            );
-            req.session.viewedFaqs[sessionKey] = now;
-        }
+        // 조회수 증가 (중복 방지 로직 포함)
+        await incrementViewCount(db, req.session, 'faq', faqId, 'faq_info');
 
         res.json({ success: true });
     } catch (error) {

@@ -6,7 +6,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { AppError } = require('../utils/errorHandler');
-// const { sanitizeInput } = require('../utils/validators');
 const logger = require('../utils/logger');
 const { getPostsWithCommentCount, getPostWithDetails, deletePostWithFiles } = require('../utils/database');
 const { asyncHandler, apiResponse, withTransaction } = require('../utils/asyncHandler');

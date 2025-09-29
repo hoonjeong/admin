@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const logger = require('../utils/logger');
+const { incrementViewCount } = require('../utils/viewTracker');
 
 // 카테고리 매핑
 const categoryMap = {
@@ -69,20 +70,8 @@ router.get('/:id', async (req, res) => {
     try {
         const postId = req.params.id;
 
-        // 세션 기반 조회수 중복 방지
-        if (!req.session.viewedPosts) {
-            req.session.viewedPosts = {};
-        }
-
-        const sessionKey = `post_${postId}`;
-        const lastViewed = req.session.viewedPosts[sessionKey];
-        const now = Date.now();
-
-        // 마지막 조회로부터 5분(300,000ms)이 지났거나 처음 조회하는 경우만 조회수 증가
-        if (!lastViewed || (now - lastViewed) > 300000) {
-            await db.execute('UPDATE post_info SET read_count = read_count + 1 WHERE id = ?', [postId]);
-            req.session.viewedPosts[sessionKey] = now;
-        }
+        // 조회수 증가 (중복 방지 로직 포함)
+        await incrementViewCount(db, req.session, 'post', postId, 'post_info');
 
         // 게시글 조회
         const [posts] = await db.execute(`
