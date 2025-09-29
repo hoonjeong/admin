@@ -60,10 +60,23 @@ router.post('/view/:id', async (req, res) => {
     try {
         const faqId = req.params.id;
 
-        await db.execute(
-            'UPDATE faq_info SET read_count = read_count + 1 WHERE id = ?',
-            [faqId]
-        );
+        // 세션 기반 조회수 중복 방지
+        if (!req.session.viewedFaqs) {
+            req.session.viewedFaqs = {};
+        }
+
+        const sessionKey = `faq_${faqId}`;
+        const lastViewed = req.session.viewedFaqs[sessionKey];
+        const now = Date.now();
+
+        // 마지막 조회로부터 5분(300,000ms)이 지났거나 처음 조회하는 경우만 조회수 증가
+        if (!lastViewed || (now - lastViewed) > 300000) {
+            await db.execute(
+                'UPDATE faq_info SET read_count = read_count + 1 WHERE id = ?',
+                [faqId]
+            );
+            req.session.viewedFaqs[sessionKey] = now;
+        }
 
         res.json({ success: true });
     } catch (error) {
